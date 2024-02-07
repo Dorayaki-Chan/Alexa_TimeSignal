@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  alexa_control:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alexa_control
+    env_file:
+      - ./.env
+    environment:
+      SET_REFRESH_TOKEN: "${SET_REFRESH_TOKEN}"
+      AUDIO_SOURCE: "${AUDIO_SOURCE}"
+      
+    command: ["./alexa_remote_control.sh",  "-e",  'speak:<audio src="${AUDIO_SOURCE}"/>こんにちは!Windowsのコマンドプロンプトから、Alexaに話させてみました。']

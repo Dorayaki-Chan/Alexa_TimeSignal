@@ -1,7 +1,7 @@
 # Alexa cliツール
-./alexa-cookie-cli
+# alexa-cookie-cli/
 # node.jsのモジュール
-./node_modules
+node_modules/
 # 環境変数
 .env
 

@@ -17,9 +17,24 @@ RUN npm install -g npm
 # 作業ディレクトリを指定
 WORKDIR /app
 
-# シェルスクリプトをコピー
-COPY ./alexa_remote_control.sh /app/
-# COPY ./.env /app/
+# package.jsonをコピー
+COPY ./package.json /app/
+# package-lock.jsonをコピー
+COPY ./package-lock.json /app/
+# tsconfig.jsonをコピー
+COPY ./tsconfig.json /app/
+# npm install
+RUN npm install
+# ソースをコピー
+COPY ./src /app/src
+
+# tsをコンパイル
+RUN npm run build
+
+# 起動！
+CMD ["npm", "run", "start"]
 
 # シェルスクリプトを実行
 # CMD ["./alexa_remote_control.sh",  "-e",  "speak:こんにちは!Windowsのコマンドプロンプトから、Alexaに話させてみました。"]
+
+

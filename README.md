@@ -10,3 +10,7 @@
 
 プロジェクトの使用方法やコマンドの実行例を示します。
 
+
+## 参照
+
+- [thorsten-gehrig/alexa-remote-control](https://github.com/thorsten-gehrig/alexa-remote-control)

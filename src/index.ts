@@ -1,11 +1,15 @@
 /**
  * このプログラムは、Alexaに時報を話させるプログラムです。
  */
+/***** モジュールのインポート *****/
 require('dotenv').config();
 const { execSync } = require('child_process');
 const cron = require('node-cron');
 const sunCalc = require('suncalc');
+/*********/
 
+/***** 環境変数の設定 *****/
+// 環境変数のチェック
 if (!(process.env.AUDIO_SYUKKOU_PATH && process.env.AUDIO_KIOTSUKE_PATH && process.env.AUDIO_KIMIGAYO_PATH && process.env.AUDIO_KAKARE_PATH)) {
     console.error('ERROR: AUDIO_PATHが設定されていません。');
     process.exit(1);
@@ -15,95 +19,153 @@ if(!(process.env.MY_LATITUDE && process.env.MY_LONGITUDE)){
     process.exit(1);
 }
 
-// 音楽ファイルパス
-const AUDIO_SYUKKOU_PATH:string | undefined = process.env.AUDIO_SYUKKOU_PATH;
-const AUDIO_KIOTSUKE_PATH:string | undefined = process.env.AUDIO_KIOTSUKE_PATH;
-const AUDIO_KIMIGAYO_PATH:string | undefined = process.env.AUDIO_KIMIGAYO_PATH;
-const AUDIO_KAKARE_PATH:string | undefined = process.env.AUDIO_KAKARE_PATH;
 // 緯度経度
 const MY_LATITUDE:number = parseFloat(process.env.MY_LATITUDE);
 const MY_LONGITUDE:number = parseFloat(process.env.MY_LONGITUDE);
+/*********/
 
-// const command:string = `./src/alexa_remote_control.sh -e speak:"<audio src='${audioPath}'/>こんにちは!DockerプラスTypeScriptからAlexaに話させてみました。"`;
-
-//const sleep = (msec:number) => new Promise(resolve => setTimeout(resolve, msec));
-
-// Alexaに話させる関数
-const speakAlexa = async(message:string) => {
-    const command:string = `./src/alexa_remote_control.sh -e speak:"${message}"`;
-    const stdout:string = execSync(command).toString();
-    // console.log(`stdout: ${stdout}`);
-    return 0;
-}
-
-// 国旗を掲揚する関数
-const kimigayo = async () => {
-    console.log('start of Kimigayo');
-    speakAlexa(`
-        <amazon:emotion name='excited'>
-            <prosody volume='x-fast'>10秒前</prosody>
-        </amazon:emotion>
-        <audio src='${AUDIO_KIOTSUKE_PATH}'/>
-        <break time='4s'/>
-        <amazon:emotion name='excited'>
-            <prosody volume='x-fast'>時間</prosody>
-        </amazon:emotion>
-        <break strength='strong'/>
-        <audio src='${AUDIO_KIMIGAYO_PATH}'/>
-        <break time='1s'/>
-        <amazon:emotion name='excited'>
-            <prosody volume='x-fast'>かかれ</prosody>
-        </amazon:emotion>
-        <audio src='${AUDIO_KAKARE_PATH}'/>`
-    );
-    return 0;
-};
-
-// 出勤する関数
-const syukkou = async () => {
-    console.log('start of syukkou');
-    speakAlexa(`<audio src='${AUDIO_SYUKKOU_PATH}'/>`);
-    console.log('end of syukkou');
-    return 0;
-};
-
-// 日没時刻までの時間を取得する関数
-const getSunsetIntervalTime = async() => {
-    const data = sunCalc.getTimes(new Date(), MY_LATITUDE, MY_LONGITUDE);
-    const sunsetTime:Date = data.sunset;
-    const now:Date = new Date();
-    const intervalTime:number = sunsetTime.getTime() - now.getTime();
-    console.log(`本日の日没時刻は${sunsetTime.getHours()}:${sunsetTime.getMinutes()}です。`);
-    console.log(`日没時刻までの時間は${intervalTime}msです。`);
-    return intervalTime;
-};
-
-// メイン関数
-const main = async () => {
-    console.log('start of main');
-    // プログラム起動時に日没時刻を過ぎていない場合
-    const intervalTimeOnce:number = await getSunsetIntervalTime();
-    if(intervalTimeOnce > 0){
-        console.log('日没時刻までの時間が残っているため、日没時刻まで待機します。');
-        // 日没時刻まで待機
-        setTimeout(async () => {
-            console.log('日没');
-            await kimigayo();
-        }, intervalTimeOnce-10000);
+/***** アレクサマネージャー *****/
+class AlexaManeger {
+    private static instance: AlexaManeger;
+    private AUDIO_SYUKKOU_PATH:string;
+    private AUDIO_KIOTSUKE_PATH:string;
+    private AUDIO_KIMIGAYO_PATH:string;
+    private AUDIO_KAKARE_PATH:string;
+    
+    private constructor() {
+        this.AUDIO_SYUKKOU_PATH = process.env.AUDIO_SYUKKOU_PATH!;
+        this.AUDIO_KIOTSUKE_PATH = process.env.AUDIO_KIOTSUKE_PATH!;
+        this.AUDIO_KIMIGAYO_PATH = process.env.AUDIO_KIMIGAYO_PATH!;
+        this.AUDIO_KAKARE_PATH = process.env.AUDIO_KAKARE_PATH!;
     }
-    // 0800に実行する
-    cron.schedule('50 59 7 * * *', async () => {
-        console.log('0800');
-        await kimigayo();
-        // 日没時刻まで待機
-        const intervalTime:number = await getSunsetIntervalTime();
-        setTimeout(async () => {
-            console.log('日没');
-            await kimigayo();
-        }, intervalTime-10000);
-    });
-    console.log('end of main');
-    return 0;
-};
 
-main();
+    public static getInstance(): AlexaManeger {
+        if (!AlexaManeger.instance) {
+            AlexaManeger.instance = new AlexaManeger();
+        }
+        return AlexaManeger.instance;
+    }
+    /* Alexaに話してもらうコマンド */
+    private speak(message:string):void{
+        const command = `/app/alexa_remote_control.sh -e speak:"${message}"`;
+        const stdout:string = execSync(command).toString();
+        //console.log(stdout);
+    }
+    /**/
+    /* ラッパテンプレート */
+    public async kimigayo():Promise<void>{
+        console.log('start of Kimigayo');
+        this.speak(`
+            <amazon:emotion name='excited'>
+                <prosody volume='x-fast'>10秒前</prosody>
+            </amazon:emotion>
+            <audio src='${this.AUDIO_KIOTSUKE_PATH}'/>
+            <break time='4s'/>
+            <amazon:emotion name='excited'>
+                <prosody volume='x-fast'>時間</prosody>
+            </amazon:emotion>
+            <break strength='strong'/>
+            <audio src='${this.AUDIO_KIMIGAYO_PATH}'/>
+            <break time='1s'/>
+            <amazon:emotion name='excited'>
+                <prosody volume='x-fast'>かかれ</prosody>
+            </amazon:emotion>
+            <audio src='${this.AUDIO_KAKARE_PATH}'/>
+        `);
+    }
+    public async syukkou(): Promise<void> {
+        console.log('start of syukkou');
+        this.speak(`<audio src='${this.AUDIO_SYUKKOU_PATH}'/>`);
+    }
+    /**/
+}
+/**********/
+
+/***** お日様 *****/
+class Sun {
+    private static instance: Sun;
+    private _latitude: number;
+    private _longitude: number;
+    private constructor() {
+        this._latitude = MY_LATITUDE;
+        this._longitude = MY_LONGITUDE;
+    }
+    public static getInstance(): Sun {
+        if (!Sun.instance) {
+            Sun.instance = new Sun();
+        }
+        return Sun.instance;
+    }
+    /* 日没時刻までの時間を取得 */
+    public async getSunsetIntervalTime(): Promise<number> {
+        const times = sunCalc.getTimes(new Date(), this._latitude, this._longitude);
+        const sunsetTime:number = times.sunset.getTime();
+        const now:number = new Date().getTime();
+        const intervalTime:number = sunsetTime - now;
+        console.log(`日没時刻: ${new Date(sunsetTime)}`);
+        console.log(`日没時刻まで${intervalTime/1000/60}分`);
+        return intervalTime;
+    }
+}
+/**********/
+
+/***** メイン *****/
+class Main {
+    private static instance: Main;
+    private _alexa: AlexaManeger;
+    private _sun: Sun;
+    private _isDev: boolean;
+
+    private constructor() {
+        this._alexa = AlexaManeger.getInstance();
+        this._sun = Sun.getInstance();
+        this._isDev = this.isDevMode();
+    }
+    public static getInstance(): Main {
+        if (!Main.instance) {
+            Main.instance = new Main();
+        }
+        return Main.instance;
+    }
+    /* devモードと通常モードの切り替え */
+    private isDevMode(): boolean {
+        return process.env.START_MODE === 'dev';
+    }
+    private async start(): Promise<void> {
+        // プログラム起動時に日没時刻を過ぎていない場合
+        const intervalTimeOnce:number = await this._sun.getSunsetIntervalTime();
+        if(intervalTimeOnce > 0){
+            console.log('日没時刻までの時間が残っているため、日没時刻まで待機します。');
+            // 日没時刻まで待機
+            setTimeout(async () => {
+                console.log('日没');
+                await this._alexa.kimigayo();
+            }, intervalTimeOnce-10000);
+        }
+        // 0800に実行する
+        cron.schedule('50 59 7 * * *', async () => {
+            console.log('0800');
+            await this._alexa.kimigayo();
+            // 日没時刻まで待機
+            const intervalTime:number = await this._sun.getSunsetIntervalTime();
+            setTimeout(async () => {
+                console.log('日没');
+                await this._alexa.kimigayo();
+            }, intervalTime-10000);
+        });
+    }
+    public async run(): Promise<void> {
+        console.log('プログラム起動');
+        if (this._isDev) {
+            console.log('devモードで起動します');
+            this._alexa.kimigayo();
+        } else {
+            console.log('通常モードで起動します');
+            this.start();
+        }
+    }
+}
+/**********/
+
+const main = Main.getInstance();
+main.run();

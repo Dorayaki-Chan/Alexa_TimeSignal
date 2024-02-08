@@ -27,6 +27,10 @@ COPY ./tsconfig.json /app/
 RUN npm install
 # ソースをコピー
 COPY ./src /app/src
+COPY ./alexa_remote_control.sh /app/
+
+# シェルスクリプトに権限を付与
+RUN chmod +x ./alexa_remote_control.sh
 
 # tsをコンパイル
 RUN npm run build
@@ -35,6 +39,7 @@ RUN npm run build
 CMD ["npm", "run", "start"]
 
 # シェルスクリプトを実行
-# CMD ["./alexa_remote_control.sh",  "-e",  "speak:こんにちは!Windowsのコマンドプロンプトから、Alexaに話させてみました。"]
+# CMD ["./src/alexa_remote_control.sh",  "-e",  "speak:'こんにちは!Windowsのコマンドプロンプトから、Alexaに話させてみました。'"]
+# CMD ["./src/alexa_remote_control.sh", "-h"]
 
 

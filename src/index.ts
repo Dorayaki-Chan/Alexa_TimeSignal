@@ -1,14 +1,28 @@
+/**
+ * このプログラムは、Alexaに時報を話させるプログラムです。
+ */
 require('dotenv').config();
 const { execSync } = require('child_process');
+const cron = require('node-cron');
+const sunCalc = require('suncalc');
 
 if (!(process.env.AUDIO_SYUKKOU_PATH && process.env.AUDIO_KIOTSUKE_PATH && process.env.AUDIO_KIMIGAYO_PATH && process.env.AUDIO_KAKARE_PATH)) {
     console.error('ERROR: AUDIO_PATHが設定されていません。');
     process.exit(1);
 }
+if(!(process.env.MY_LATITUDE && process.env.MY_LONGITUDE)){
+    console.error('ERROR: 緯度経度が設定されていません。');
+    process.exit(1);
+}
+
+// 音楽ファイルパス
 const AUDIO_SYUKKOU_PATH:string | undefined = process.env.AUDIO_SYUKKOU_PATH;
 const AUDIO_KIOTSUKE_PATH:string | undefined = process.env.AUDIO_KIOTSUKE_PATH;
 const AUDIO_KIMIGAYO_PATH:string | undefined = process.env.AUDIO_KIMIGAYO_PATH;
 const AUDIO_KAKARE_PATH:string | undefined = process.env.AUDIO_KAKARE_PATH;
+// 緯度経度
+const MY_LATITUDE:number = parseFloat(process.env.MY_LATITUDE);
+const MY_LONGITUDE:number = parseFloat(process.env.MY_LONGITUDE);
 
 // const command:string = `./src/alexa_remote_control.sh -e speak:"<audio src='${audioPath}'/>こんにちは!DockerプラスTypeScriptからAlexaに話させてみました。"`;
 
@@ -17,8 +31,8 @@ const AUDIO_KAKARE_PATH:string | undefined = process.env.AUDIO_KAKARE_PATH;
 // Alexaに話させる関数
 const speakAlexa = async(message:string) => {
     const command:string = `./src/alexa_remote_control.sh -e speak:"${message}"`;
-    const stdout = execSync(command);
-    console.log(`stdout: ${stdout.toString()}`);
+    const stdout:string = execSync(command).toString();
+    // console.log(`stdout: ${stdout}`);
     return 0;
 }
 
@@ -42,14 +56,6 @@ const kimigayo = async () => {
         </amazon:emotion>
         <audio src='${AUDIO_KAKARE_PATH}'/>`
     );
-    //speakAlexa(`<audio src='${AUDIO_KIOTSUKE_PATH}'/>`);
-    //await sleep(5000);
-    //speakAlexa(`時間!`);
-    //speakAlexa(`<audio src='${AUDIO_KIMIGAYO_PATH}'/>`);
-    //await sleep(2000);
-    //speakAlexa(`かかれ!`);
-    //speakAlexa(`<audio src='${AUDIO_KAKARE_PATH}'/>`);
-    console.log('end of kimigayo');
     return 0;
 };
 
@@ -61,10 +67,41 @@ const syukkou = async () => {
     return 0;
 };
 
+// 日没時刻までの時間を取得する関数
+const getSunsetIntervalTime = async() => {
+    const data = sunCalc.getTimes(new Date(), MY_LATITUDE, MY_LONGITUDE);
+    const sunsetTime:Date = data.sunset;
+    const now:Date = new Date();
+    const intervalTime:number = sunsetTime.getTime() - now.getTime();
+    console.log(`本日の日没時刻は${sunsetTime.getHours()}:${sunsetTime.getMinutes()}です。`);
+    console.log(`日没時刻までの時間は${intervalTime}msです。`);
+    return intervalTime;
+};
+
 // メイン関数
 const main = async () => {
     console.log('start of main');
-    await kimigayo();
+    // プログラム起動時に日没時刻を過ぎていない場合
+    const intervalTimeOnce:number = await getSunsetIntervalTime();
+    if(intervalTimeOnce > 0){
+        console.log('日没時刻までの時間が残っているため、日没時刻まで待機します。');
+        // 日没時刻まで待機
+        setTimeout(async () => {
+            console.log('日没');
+            await kimigayo();
+        }, intervalTimeOnce-10000);
+    }
+    // 0800に実行する
+    cron.schedule('50 59 7 * * *', async () => {
+        console.log('0800');
+        await kimigayo();
+        // 日没時刻まで待機
+        const intervalTime:number = await getSunsetIntervalTime();
+        setTimeout(async () => {
+            console.log('日没');
+            await kimigayo();
+        }, intervalTime-10000);
+    });
     console.log('end of main');
     return 0;
 };

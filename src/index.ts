@@ -10,7 +10,13 @@ const sunCalc = require('suncalc');
 
 /***** 環境変数の設定 *****/
 // 環境変数のチェック
-if (!(process.env.AUDIO_SYUKKOU_PATH && process.env.AUDIO_KIOTSUKE_PATH && process.env.AUDIO_KIMIGAYO_PATH && process.env.AUDIO_KAKARE_PATH)) {
+if (!(  process.env.AUDIO_SYUKKOU_PATH && 
+        process.env.AUDIO_KIOTSUKE_PATH && 
+        process.env.AUDIO_KIMIGAYO_PATH && 
+        process.env.AUDIO_KAKARE_PATH &&
+        process.env.AUDIO_TEIJITENKEN_PATH &&
+        process.env.AUDIO_UCHIKATAHAZIME_PATH
+    )) {
     console.error('ERROR: AUDIO_PATHが設定されていません。');
     process.exit(1);
 }
@@ -31,12 +37,16 @@ class AlexaManeger {
     private AUDIO_KIOTSUKE_PATH:string;
     private AUDIO_KIMIGAYO_PATH:string;
     private AUDIO_KAKARE_PATH:string;
+    private AUDIO_TEIJITENKEN_PATH:string;
+    private AUDIO_UCHIKATAHAZIME_PATH:string;
     
     private constructor() {
         this.AUDIO_SYUKKOU_PATH = process.env.AUDIO_SYUKKOU_PATH!;
         this.AUDIO_KIOTSUKE_PATH = process.env.AUDIO_KIOTSUKE_PATH!;
         this.AUDIO_KIMIGAYO_PATH = process.env.AUDIO_KIMIGAYO_PATH!;
         this.AUDIO_KAKARE_PATH = process.env.AUDIO_KAKARE_PATH!;
+        this.AUDIO_TEIJITENKEN_PATH = process.env.AUDIO_TEIJITENKEN_PATH!;
+        this.AUDIO_UCHIKATAHAZIME_PATH = process.env.AUDIO_UCHIKATAHAZIME_PATH!;
     }
 
     public static getInstance(): AlexaManeger {
@@ -76,6 +86,14 @@ class AlexaManeger {
     public async syukkou(): Promise<void> {
         console.log('start of syukkou');
         this.speak(`<audio src='${this.AUDIO_SYUKKOU_PATH}'/>`);
+    }
+    public async teijitenken(): Promise<void> {
+        console.log('start of teijitenken');
+        this.speak(`<audio src='${this.AUDIO_TEIJITENKEN_PATH}'/>`);
+    }
+    public async uchikatahajime(): Promise<void> {
+        console.log('start of uchikatahajime');
+        this.speak(`<audio src='${this.AUDIO_UCHIKATAHAZIME_PATH}'/>`);
     }
     /**/
 }
@@ -131,6 +149,12 @@ class Main {
     private isDevMode(): boolean {
         return process.env.START_MODE === 'dev';
     }
+    /**/
+    /* sleep関数 */
+    private sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    /**/
     private async start(): Promise<void> {
         // プログラム起動時に日没時刻を過ぎていない場合
         const intervalTimeOnce:number = await this._sun.getSunsetIntervalTime();
@@ -158,10 +182,16 @@ class Main {
         console.log('プログラム起動');
         if (this._isDev) {
             console.log('devモードで起動します');
-            this._alexa.kimigayo();
+            await this._alexa.teijitenken();
+            this.sleep(10000).then(async () => {
+                await this._alexa.kimigayo();
+            });
         } else {
             console.log('通常モードで起動します');
-            this.start();
+            this._alexa.uchikatahajime();
+            this.sleep(10000).then(async () => {
+                await this.start();
+            });
         }
     }
 }

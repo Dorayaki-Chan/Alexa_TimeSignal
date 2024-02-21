@@ -100,7 +100,7 @@
 # this can be obtained by doing the device registration login flow
 #  e.g. from here: https://github.com/adn77/alexa-cookie-cli/
 # SET_REFRESH_TOKEN=""
-# SET_REFRESH_TOKEN="Atnr|EwICIHtcm2Q4vpHNO3QbQvrW9Z2InKBBb6jLeWh_F2EOZPizkGjNB_cfL-Vih5_il6BcCoz85SB3cuHuK51LAO9OL0KoCTgEU-_Fj1Np0pwi2e-YN-EvA9myOdcrlxKjxR6kJ2JEyUTGlfJg_WsWpW2KKxahZXhY0YKHOPr3V0D7wUCiQfYRlxpK5-Ya2bfgMqAeDZNBJa2xSA10bLUDAVsff0mRYIs5MZjsD_-unixCxXhEV-jakSzZHCYqkHtoa72QCCyauro-1mmXI1NyQ0xEPd_eqNCH_eHITLZC-UNttU8Cz7QeLPPUMWFARGPweuP4bztjAoywpwN0j7cR8tpv7C3EFbYcOdeQJEc7ZzZiLTWsmfUuCHvDa1ZQsw27FbNxVlMSSeplIdv3wOx5tCxLcVSC"
+# SET_REFRESH_TOKEN="Atnr|~"
 
 SET_TTS_LOCALE='ja-JP'
 

@@ -15,7 +15,8 @@ if (!(  process.env.AUDIO_SYUKKOU_PATH &&
         process.env.AUDIO_KIMIGAYO_PATH && 
         process.env.AUDIO_KAKARE_PATH &&
         process.env.AUDIO_TEIJITENKEN_PATH &&
-        process.env.AUDIO_UCHIKATAHAZIME_PATH
+        process.env.AUDIO_UCHIKATAHAZIME_PATH &&
+        process.env.AUDIO_SHOTO_PATH
     )) {
     console.error('ERROR: AUDIO_PATHが設定されていません。');
     process.exit(1);
@@ -39,6 +40,7 @@ class AlexaManeger {
     private AUDIO_KAKARE_PATH:string;
     private AUDIO_TEIJITENKEN_PATH:string;
     private AUDIO_UCHIKATAHAZIME_PATH:string;
+    private AUDIO_SHOTO_PATH:string;
     
     private constructor() {
         this.AUDIO_SYUKKOU_PATH = process.env.AUDIO_SYUKKOU_PATH!;
@@ -47,6 +49,7 @@ class AlexaManeger {
         this.AUDIO_KAKARE_PATH = process.env.AUDIO_KAKARE_PATH!;
         this.AUDIO_TEIJITENKEN_PATH = process.env.AUDIO_TEIJITENKEN_PATH!;
         this.AUDIO_UCHIKATAHAZIME_PATH = process.env.AUDIO_UCHIKATAHAZIME_PATH!;
+        this.AUDIO_SHOTO_PATH = process.env.AUDIO_SHOTO_PATH!;
     }
 
     public static getInstance(): AlexaManeger {
@@ -94,6 +97,10 @@ class AlexaManeger {
     public async uchikatahajime(): Promise<void> {
         console.log('start of uchikatahajime');
         this.speak(`<audio src='${this.AUDIO_UCHIKATAHAZIME_PATH}'/>`);
+    }
+    public async shoto(): Promise<void> {
+        console.log('start of shoto');
+        this.speak(`<audio src='${this.AUDIO_SHOTO_PATH}'/>`);
     }
     /**/
 }
@@ -177,6 +184,11 @@ class Main {
                 await this._alexa.kimigayo();
             }, intervalTime-10000);
         });
+        // 2300に実行する
+        cron.schedule('00 00 23 * * *', async () => {
+            console.log('2300');
+            await this._alexa.shoto();
+        });
     }
     public async run(): Promise<void> {
         console.log('プログラム起動');
@@ -184,7 +196,7 @@ class Main {
             console.log('devモードで起動します');
             await this._alexa.teijitenken();
             this.sleep(10000).then(async () => {
-                await this._alexa.kimigayo();
+                await this._alexa.shoto();
             });
         } else {
             console.log('通常モードで起動します');

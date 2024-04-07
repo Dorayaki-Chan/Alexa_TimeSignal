@@ -16,7 +16,10 @@ if (!(  process.env.AUDIO_SYUKKOU_PATH &&
         process.env.AUDIO_KAKARE_PATH &&
         process.env.AUDIO_TEIJITENKEN_PATH &&
         process.env.AUDIO_UCHIKATAHAZIME_PATH &&
-        process.env.AUDIO_SHOTO_PATH
+        process.env.AUDIO_SHOTO_PATH &&
+        process.env.AUDIO_KISHO_PATH &&
+        process.env.AUDIO_TENKO_PATH &&
+        process.env.AUDIO_SHOKUJI_PATH
     )) {
     console.error('ERROR: AUDIO_PATHが設定されていません。');
     process.exit(1);
@@ -41,6 +44,9 @@ class AlexaManeger {
     private AUDIO_TEIJITENKEN_PATH:string;
     private AUDIO_UCHIKATAHAZIME_PATH:string;
     private AUDIO_SHOTO_PATH:string;
+    private AUDIO_KISHO_PATH:string;
+    private AUDIO_TENKO_PATH:string;
+    private AUDIO_SHOKUJI_PATH:string;
     
     private constructor() {
         this.AUDIO_SYUKKOU_PATH = process.env.AUDIO_SYUKKOU_PATH!;
@@ -50,6 +56,9 @@ class AlexaManeger {
         this.AUDIO_TEIJITENKEN_PATH = process.env.AUDIO_TEIJITENKEN_PATH!;
         this.AUDIO_UCHIKATAHAZIME_PATH = process.env.AUDIO_UCHIKATAHAZIME_PATH!;
         this.AUDIO_SHOTO_PATH = process.env.AUDIO_SHOTO_PATH!;
+        this.AUDIO_KISHO_PATH = process.env.AUDIO_KISHO_PATH!;
+        this.AUDIO_TENKO_PATH = process.env.AUDIO_TENKO_PATH!;
+        this.AUDIO_SHOKUJI_PATH = process.env.AUDIO_SHOKUJI_PATH!;
     }
 
     public static getInstance(): AlexaManeger {
@@ -101,6 +110,18 @@ class AlexaManeger {
     public async shoto(): Promise<void> {
         console.log('start of shoto');
         this.speak(`<audio src='${this.AUDIO_SHOTO_PATH}'/>`);
+    }
+    public async kisho(): Promise<void> {
+        console.log('start of kisho');
+        this.speak(`<audio src='${this.AUDIO_KISHO_PATH}'/>`);
+    }
+    public async tenko(): Promise<void> {
+        console.log('start of tenko');
+        this.speak(`<audio src='${this.AUDIO_TENKO_PATH}'/>`);
+    }
+    public async shokuji(): Promise<void> {
+        console.log('start of shokuji');
+        this.speak(`<audio src='${this.AUDIO_SHOKUJI_PATH}'/>`);
     }
     /**/
 }
@@ -173,6 +194,21 @@ class Main {
                 await this._alexa.kimigayo();
             }, intervalTimeOnce-10000);
         }
+        // 0600に実行する(平日のみ)
+        cron.schedule('00 00 06 * * 1-5', async () => {
+            console.log('0600');
+            await this._alexa.kisho();
+        });
+        // 0610に実行する(平日のみ)
+        cron.schedule('00 10 06 * * 1-5', async () => {
+            console.log('0610');
+            await this._alexa.tenko();
+        });
+        // 0620に実行する(平日のみ)
+        cron.schedule('00 20 06 * * 1-5', async () => {
+            console.log('0620');
+            await this._alexa.shokuji();
+        });
         // 0800に実行する
         cron.schedule('50 59 7 * * *', async () => {
             console.log('0800');
@@ -196,7 +232,7 @@ class Main {
             console.log('devモードで起動します');
             await this._alexa.teijitenken();
             this.sleep(10000).then(async () => {
-                await this._alexa.shoto();
+                await this._alexa.shokuji();
             });
         } else {
             console.log('通常モードで起動します');

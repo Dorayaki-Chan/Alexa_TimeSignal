@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "strict": true,
+        "esModuleInterop": true,
+        "typeRoots": ["./node_modules/@types"],
+    },
+    // Include only the TypeScript files in the src directory
+    "include": [
+        "src/**/*.ts",
+    ]
+}

@@ -2,6 +2,8 @@ import express,  { Express, Request, Response } from 'express';
 import session from 'express-session';
 import cors from 'cors';
 
+import os from 'os';
+
 
 const port = 3001;
 const secretKey = 'your_secret_key';
@@ -42,9 +44,9 @@ class App {
 
     private configureRoutes(): void {
         this.app.get('/', (req, res) => this.home(req, res));
-        this.app.post('/login', (req, res) => this.login(req, res));
-        this.app.get('/hello', (req, res) => this.hello(req, res));
-        this.app.get('/config', (req, res) => this.config(req, res));
+        this.app.post('/api/login', (req, res) => this.login(req, res));
+        this.app.get('/api/hello', (req, res) => this.hello(req, res));
+        this.app.get('/api/config', (req, res) => this.config(req, res));
     }
 
     private home(req: Request, res: Response): void {
@@ -83,7 +85,20 @@ class App {
 
     public listen(): void {
         this.app.listen(this.port, '0.0.0.0', () => {
-            console.log(`Server is running on ${this.port}`);
+            // 起動しているipアドレスを表示
+            
+            const ifaces = os.networkInterfaces();
+            // console.log(ifaces['Wi-Fi']);
+            if (!ifaces['Wi-Fi']) {
+                console.log('Wi-Fi is not found');
+                return;
+            }
+            else {
+                const wifiAddress = ifaces['Wi-Fi'].find((i:os.NetworkInterfaceInfo) => i.family === 'IPv4')?.address;
+                console.log(`Server is running on`);
+                console.log(`\t→ local: http://localhost:${this.port}`);
+                console.log(`\t→ network: http://${wifiAddress}:${this.port}`);
+            }
         });
     }
 }

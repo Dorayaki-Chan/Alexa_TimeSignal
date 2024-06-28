@@ -2,7 +2,7 @@ version: '3'
 
 services:
   alexa_control:
-    build: /alexa-timesignal-app
+    build: /alexa-controller-app
     container_name: alexa_control
     env_file:
       - ./.env

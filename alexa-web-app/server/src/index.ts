@@ -95,9 +95,9 @@ class App {
             }
             else {
                 const wifiAddress = ifaces['Wi-Fi'].find((i:os.NetworkInterfaceInfo) => i.family === 'IPv4')?.address;
-                console.log(`Server is running on`);
-                console.log(`\t→ local: http://localhost:${this.port}`);
-                console.log(`\t→ network: http://${wifiAddress}:${this.port}`);
+                console.log(`\x1b[1mExpressServer\x1b[0m is running on`);
+                console.log(`\t\x1b[1m\x1b[32m→\x1b[0m \x1b[1mlocal\x1b[0m: \x1b[36mhttp://localhost:${this.port}\x1b[0m`);
+                console.log(`\t\x1b[1m\x1b[32m→\x1b[0m \x1b[1mnetwork\x1b[0m: \x1b[36mhttp://${wifiAddress}:${this.port}\x1b[0m`);
             }
         });
     }

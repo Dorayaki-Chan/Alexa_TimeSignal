@@ -1,13 +1,13 @@
 import { Routes, Route, /*Link*/} from 'react-router-dom';
 
-import TopBar from './parts/topBar.tsx';
-import BottomBar from './parts/bottomBar.tsx';
+import TopBar from './parts/TopBar.tsx'
+import BottomBar from './parts/BottomBar.tsx';
 
-import Home from './pages/home.tsx';
-import Login from './pages/login.tsx';
-import Config from './pages/config.tsx';
-import Log from './pages/log.tsx';
-import NoMatch from './pages/nomatch.tsx';
+import Home from './pages/Home.tsx';
+import Login from './pages/Login.tsx';
+import Config from './pages/Config.tsx';
+import Log from './pages/Log.tsx';
+import NoMatch from './pages/Nomatch.tsx';
 
 function App() {
     return (

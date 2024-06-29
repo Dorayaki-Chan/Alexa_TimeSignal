@@ -10,7 +10,7 @@ function Config() {
     useEffect(() => {
         const request = async () => {
             try {
-                const response = await axios.get('http://192.168.1.10:3001/config', {
+                const response = await axios.get('http://192.168.1.10:3001/api/config', {
                     withCredentials: true
                 });
                 console.log('Config:', response.data);

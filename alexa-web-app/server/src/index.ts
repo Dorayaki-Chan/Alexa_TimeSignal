@@ -54,14 +54,25 @@ class App {
     }
 
     private login(req: Request, res: Response): void {
+        // テスト用
+        const [myusername, mypassword] = ['user', 'password']; 
+
         console.log('POST通過！');
         const { username, password } = req.body;
-        if (username === 'user' && password === 'password') {
-            req.session.user = username;
-            console.log('ログイン成功！', req.session.user);
-            res.status(200).json({ user: username });
-        } else {
-            res.status(401).json({ message: '認証に失敗しました' });
+        if(username === myusername){
+            if(password === mypassword){
+                req.session.user = username;
+                console.log('ログイン成功！', req.session.user);
+                res.status(200).json({ user: username });
+            }
+            else{
+                console.log('パスワードが異なります。');
+                res.status(401).json({ message: 'パスワードが異なります。' });
+            }
+        }
+        else{
+            console.log('ユーザー名が異なります。');
+            res.status(401).json({ message: 'ユーザー名が異なります。' });
         }
     }
 
@@ -75,7 +86,8 @@ class App {
     }
 
     private config(req: Request, res: Response): void {
-        console.log('GET通過！');
+        console.log('設定GET通過！');
+        console.log(req.session.user);
         if (req.session.user) {
             res.json({ user: req.session.user });
         } else {

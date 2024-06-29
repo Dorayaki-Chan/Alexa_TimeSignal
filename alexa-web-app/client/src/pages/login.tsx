@@ -21,7 +21,7 @@ import axios from 'axios';
 type CopyrightProps = {
 	children?: React.ReactNode;
 	sx?: SxProps;
-  }
+}
 
 function Copyright(props: CopyrightProps) {
 	return (

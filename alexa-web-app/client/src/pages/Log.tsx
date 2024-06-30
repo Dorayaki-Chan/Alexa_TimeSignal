@@ -11,6 +11,19 @@ function Log() {
         setPageName('ログ'); // ページ名を設定
         setTopBarImg(TopBarImg); // トップバーの画像を設定
     }, [setPageName, setTopBarImg]);
+
+    return (
+        <>
+            <h1>ログ画面</h1>
+            <p>ログ画面です</p>
+            {Array.from({ length: 100 }, (_, i) => (
+                <div key={i}>
+                    <h1>ログ</h1> {/* 状態を使用してメッセージを表示 */}
+                    <p>2021 2020 2222</p>
+                </div>
+            ))}
+        </>
+    );
 }
 
 

@@ -1,11 +1,22 @@
 import axios from 'axios';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext} from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PageNameContext, TopBarImgContext } from '../parts/contexts.ts';
+
+import TopBarImg from '../assets/img/FJ_GRAD_H3A_RGB.png';
 
 function Config() {
     const [loginFlag, setloginFlag] = useState(false);
     const [name, setName] = useState('');
     const navigate = useNavigate();
+
+    const { setPageName } = useContext(PageNameContext);
+    const { setTopBarImg } = useContext(TopBarImgContext);
+
+    useEffect(() => {
+        setPageName('設定'); // ページ名を設定
+        setTopBarImg(TopBarImg); // トップバーの画像を設定
+    }, [setPageName, setTopBarImg]);
 
     useEffect(() => {
         const request = async () => {

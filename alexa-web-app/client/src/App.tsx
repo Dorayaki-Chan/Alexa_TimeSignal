@@ -10,21 +10,31 @@ import Config from './pages/Config.tsx';
 import Log from './pages/Log.tsx';
 import NoMatch from './pages/Nomatch.tsx';
 
+import { PageNameContext, TopBarImgContext } from './parts/contexts.ts';
+
+import TopBarImg from './assets/img/FJ_GRAD_H3A_RGB.png';
+
 function App() {
+    const [pageName, setPageName] = useState('');
+    const [topBarImg, setTopBarImg] = useState(TopBarImg); // 画像のURL
     return (
         <>
-            <TopBar />
-            <div className="App">
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-        
-                    <Route path="/config" element={<Config/>} />
-                    <Route path="/Log" element={<Log />} />
-                    <Route path="*" element={<NoMatch />} />
-                </Routes>
-            </div>
-            <BottomBar />
+            <PageNameContext.Provider value={{pageName, setPageName}}>
+                <TopBarImgContext.Provider value={{topBarImg, setTopBarImg}}>
+                    <TopBar />
+                    <div className="App">
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/login" element={<Login />} />
+                
+                            <Route path="/config" element={<Config/>} />
+                            <Route path="/Log" element={<Log />} />
+                            <Route path="*" element={<NoMatch />} />
+                        </Routes>
+                    </div>
+                    <BottomBar />
+                </TopBarImgContext.Provider>
+            </PageNameContext.Provider>
         </>
     );
 }

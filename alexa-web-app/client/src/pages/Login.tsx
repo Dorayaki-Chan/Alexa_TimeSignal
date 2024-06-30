@@ -12,11 +12,13 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { SxProps } from '@mui/system'; // SxPropsのインポート
 
+import { PageNameContext, TopBarImgContext } from '../parts/contexts.ts';
 
-
-import { useState } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+
+import TopBarImg from '../assets/img/bgg-dg-yl.png';
 
 type CopyrightProps = {
 	children?: React.ReactNode;
@@ -63,6 +65,14 @@ function SignIn() {
 	const [isSubmit, setIsSubmit] = useState(false);
 	const [loginRequest, setLoginRequest] = useState(loginError);
 	const navigate = useNavigate();
+
+	const { setPageName } = useContext(PageNameContext);
+	const { setTopBarImg } = useContext(TopBarImgContext);
+
+    useEffect(() => {
+        setPageName('ログイン'); // ページ名を設定
+		setTopBarImg(TopBarImg); // トップバーの画像を設定
+    }, [setPageName, setTopBarImg]);
 
 	const handleChange = (e:React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		const { name, value } = e.target;

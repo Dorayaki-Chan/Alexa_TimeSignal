@@ -4,6 +4,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import CssBaseline from '@mui/material/CssBaseline';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
+import Avatar from '@mui/material/Avatar';
 
 import Logo from '../assets/img/my-site-logo.png';
 
@@ -25,7 +26,7 @@ function TopBar() {
     }, [trigger]);
 
     return (
-        <div>
+        <>
         <CssBaseline />
         <AppBar 
             position= 'fixed'
@@ -36,7 +37,7 @@ function TopBar() {
                 backgroundColor: 'secondary.contrastText'
             }}>
             <Toolbar sx={{ justifyContent: 'center' }}>
-                <img src={`${Logo}`} alt="" width="56" height="56" />
+                <Avatar sx={{ width: 50, height: 50 }} src={Logo}/>
                 <Typography variant="h5" component="div" sx={{color:'text.primary' }}>
                     Alexa情報統合システム
                 </Typography>
@@ -57,7 +58,7 @@ function TopBar() {
                 </Typography>
             </Toolbar>
         </AppBar>
-        </div>
+        </>
     );
 }
 

@@ -13,6 +13,7 @@ import NoMatch from './pages/Nomatch.tsx';
 import { PageNameContext, TopBarImgContext } from './parts/contexts.ts';
 
 import TopBarImg from './assets/img/FJ_GRAD_H3A_RGB.png';
+import { Margin } from '@mui/icons-material';
 
 function App() {
     const [pageName, setPageName] = useState('');
@@ -22,7 +23,7 @@ function App() {
             <PageNameContext.Provider value={{pageName, setPageName}}>
                 <TopBarImgContext.Provider value={{topBarImg, setTopBarImg}}>
                     <TopBar />
-                    <div className="App">
+                    <div className="App" style={{margin:"112px 0px"}}>
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<Login />} />

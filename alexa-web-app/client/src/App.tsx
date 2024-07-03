@@ -20,22 +20,24 @@ function App() {
     const [topBarImg, setTopBarImg] = useState(TopBarImg); // 画像のURL
     return (
         <>
-            <PageNameContext.Provider value={{pageName, setPageName}}>
-                <TopBarImgContext.Provider value={{topBarImg, setTopBarImg}}>
-                    <TopBar />
-                    <div className="App" style={{margin:"112px 0px"}}>
-                        <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/login" element={<Login />} />
-                
-                            <Route path="/config" element={<Config/>} />
-                            <Route path="/Log" element={<Log />} />
-                            <Route path="*" element={<NoMatch />} />
-                        </Routes>
-                    </div>
-                    <BottomBar />
-                </TopBarImgContext.Provider>
-            </PageNameContext.Provider>
+            <div style={{ backgroundColor: '#f0f0f0', minHeight: '100vh' }}> {/* バックグラウンドカラーを設定 */}
+                <PageNameContext.Provider value={{pageName, setPageName}}>
+                    <TopBarImgContext.Provider value={{topBarImg, setTopBarImg}}>
+                        <TopBar />
+                        <div className="App" style={{margin:"112px 0px"}}>
+                            <Routes>
+                                <Route path="/" element={<Home />} />
+                                <Route path="/login" element={<Login />} />
+                    
+                                <Route path="/config" element={<Config/>} />
+                                <Route path="/Log" element={<Log />} />
+                                <Route path="*" element={<NoMatch />} />
+                            </Routes>
+                        </div>
+                        <BottomBar />
+                    </TopBarImgContext.Provider>
+                </PageNameContext.Provider>
+            </div>
         </>
     );
 }

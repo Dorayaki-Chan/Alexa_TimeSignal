@@ -20,7 +20,7 @@ function App() {
     const [topBarImg, setTopBarImg] = useState(TopBarImg); // 画像のURL
     return (
         <>
-            <div style={{ backgroundColor: '#f0f0f0', minHeight: '100vh' }}> {/* バックグラウンドカラーを設定 */}
+            {/* <div style={{ backgroundColor: '#f0f0f0', minHeight: '100vh' }}> バックグラウンドカラーを設定 */}
                 <PageNameContext.Provider value={{pageName, setPageName}}>
                     <TopBarImgContext.Provider value={{topBarImg, setTopBarImg}}>
                         <TopBar />
@@ -37,7 +37,7 @@ function App() {
                         <BottomBar />
                     </TopBarImgContext.Provider>
                 </PageNameContext.Provider>
-            </div>
+            {/* </div> */}
         </>
     );
 }

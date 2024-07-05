@@ -82,8 +82,8 @@ function Config() {
                     <Table aria-label="simple table">
                         <TableBody>
                             <TableRow
-                            key="1"
-                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                key="1"
+                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                             >
                                 <TableCell component="th" scope="row">総員起こしラッパ</TableCell>
                                 <TableCell align="right">

@@ -43,17 +43,18 @@ class App {
     }
 
     private configureRoutes(): void {
-        this.app.get('/', (req, res) => this.home(req, res));
-        this.app.post('/api/login', (req, res) => this.login(req, res));
-        this.app.get('/api/hello', (req, res) => this.hello(req, res));
-        this.app.get('/api/config', (req, res) => this.config(req, res));
+        this.app.get('/', (req, res) => this.getHome(req, res));
+        this.app.post('/api/login', (req, res) => this.postLogin(req, res));
+        this.app.get('/api/hello', (req, res) => this.getHello(req, res));
+        this.app.get('/api/config', (req, res) => this.getConfig(req, res));
+        this.app.put('/api/config', (req, res) => this.putConfig(req, res));
     }
 
-    private home(req: Request, res: Response): void {
+    private getHome(req: Request, res: Response): void {
         res.status(200).send('Hello World!Type Script!');
     }
 
-    private login(req: Request, res: Response): void {
+    private postLogin(req: Request, res: Response): void {
         // テスト用
         const [myusername, mypassword] = ['user', 'password']; 
 
@@ -76,7 +77,7 @@ class App {
         }
     }
 
-    private hello(req: Request, res: Response): void {
+    private getHello(req: Request, res: Response): void {
         console.log('GET通過！');
         if (req.session.user) {
             res.json({ message: `Hello ${req.session.user}` });
@@ -85,10 +86,36 @@ class App {
         }
     }
 
-    private config(req: Request, res: Response): void {
+    private getConfig(req: Request, res: Response): void {
         console.log('設定GET通過！');
         console.log(req.session.user);
         if (req.session.user) {
+            const data = {
+                kisho: {
+                    flag: true,
+                    time: '06:00',
+                },
+                shoto: {
+                    flag: true,
+                    time: '23:00',
+                },
+                stop: {
+                    flag: true,
+                    startDate: '2021-08-01',
+                    endDate: '2021-08-31',
+                }
+            }
+            res.json({ user: req.session.user });
+        } else {
+            res.status(401).json({ message: 'Unauthorized' });
+        }
+    }
+
+    private putConfig(req: Request, res: Response): void {
+        console.log('設定PUT通過！');
+        console.log(req.session.user);
+        if (req.session.user) {
+
             res.json({ user: req.session.user });
         } else {
             res.status(401).json({ message: 'Unauthorized' });

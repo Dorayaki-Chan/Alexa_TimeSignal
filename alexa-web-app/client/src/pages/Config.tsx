@@ -16,12 +16,15 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 
+import LinearProgress from '@mui/material/LinearProgress';
+import Skeleton from '@mui/material/Skeleton';
+import Stack from '@mui/material/Stack';
+
 import { PageNameContext, TopBarImgContext } from '../parts/contexts.ts';
 
 import TopBarImg from '../assets/img/FJ_GRAD_H3A_RGB.png';
 import IOSSwitch from '../parts/IosButton.tsx';
 import IOSSwitchWarning from '../parts/IosButtonWarning.tsx';
-
 
 function Config() {
     const [loginFlag, setloginFlag] = useState(false);
@@ -177,12 +180,20 @@ function Config() {
             </Container>
             </>) : (
             <>
-                <p>読み込み中</p>
+                <Box sx={{ width: '100%' }}>
+                    <LinearProgress />
+                </Box>
+                <Container component="main" maxWidth="xs">
+                    <Stack spacing={1}>
+                        {/* For other variants, adjust the size with `width` and `height` */}
+                        <Skeleton variant="rectangular" height={200} />
+                        <Skeleton variant="rounded" height={200} />
+                    </Stack>
+                </Container>
             </>
         )}    
     </>
     );
 }
-
 
 export default Config;

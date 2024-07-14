@@ -29,6 +29,26 @@ import IOSSwitchWarning from '../parts/IosButtonWarning.tsx';
 function Config() {
     const [loginFlag, setloginFlag] = useState(false);
     const [name, setName] = useState('');
+    const [configData, setConfigData] = useState({
+        kisho: {
+            flag: true,
+            time: '',
+        },
+        shoto: {
+            flag: true,
+            time: '',
+        },
+        stop: {
+            flag: true,
+            startDate: '',
+            endDate: '',
+        }
+    });
+
+    const [checked1, setChecked1] = useState(false);
+    const [checked2, setChecked2] = useState(true);
+    const [checked3, setChecked3] = useState(true);
+
     const navigate = useNavigate();
 
     const { setPageName } = useContext(PageNameContext);
@@ -45,11 +65,29 @@ function Config() {
                 const response = await axios.get('http://192.168.1.10:3001/api/config', {
                     withCredentials: true
                 });
-                console.log('Config:', response.data);
+                
                 if (response.status != 200){
                     navigate('/login');
                 }
                 setName(response.data.user);
+                setConfigData({
+                    kisho: {
+                        flag: response.data.data.kisho.flag,
+                        time: response.data.data.kisho.time,
+                    },
+                    shoto: {
+                        flag: response.data.data.shoto.flag,
+                        time: response.data.data.shoto.time,
+                    },
+                    stop: {
+                        flag: response.data.data.stop.flag,
+                        startDate: response.data.data.stop.startDate,
+                        endDate: response.data.data.stop.endDate,
+                    }
+                });
+                setChecked1(response.data.data.kisho.flag);
+                setChecked2(response.data.data.shoto.flag);
+                setChecked3(response.data.data.stop.flag);
                 setloginFlag(true);
             } catch (error) {
                 console.error('API呼び出し中にエラーが発生しました:', error);
@@ -59,9 +97,7 @@ function Config() {
         request();
     }, [navigate]);
 
-    const [checked1, setChecked1] = useState(false);
-    const [checked2, setChecked2] = useState(true);
-    const [checked3, setChecked3] = useState(true);
+    
     const handleChange1 = (event:React.ChangeEvent<HTMLInputElement>) => {
         alert(event.target.checked);
         setChecked1(event.target.checked);
@@ -103,7 +139,7 @@ function Config() {
                                         disabled={!checked1}
                                         id="time"
                                         type="time"
-                                        defaultValue="06:00"
+                                        defaultValue={configData.kisho.time}
                                         InputLabelProps={{
                                             shrink: true,
                                         }}
@@ -156,7 +192,12 @@ function Config() {
                                             label="開始日"
                                             id="start-date"
                                             type="date"
-                                            defaultValue="2022-01-01"
+                                            defaultValue={configData.stop.startDate}
+                                            InputProps={{
+                                                inputProps: {
+                                                    min: new Date().toISOString().split('T')[0],
+                                                },
+                                            }}
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}
@@ -166,7 +207,12 @@ function Config() {
                                             label="終了日"
                                             id="end-date"
                                             type="date"
-                                            defaultValue="2022-01-01"
+                                            defaultValue={configData.stop.endDate}
+                                            InputProps={{
+                                                inputProps: {
+                                                    min: configData.stop.startDate,
+                                                },
+                                            }}
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}

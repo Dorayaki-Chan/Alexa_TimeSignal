@@ -92,20 +92,20 @@ class App {
         if (req.session.user) {
             const data = {
                 kisho: {
-                    flag: true,
-                    time: '06:00',
+                    flag: false,
+                    time: '12:00',
                 },
                 shoto: {
                     flag: true,
                     time: '23:00',
                 },
                 stop: {
-                    flag: true,
-                    startDate: '2021-08-01',
-                    endDate: '2021-08-31',
+                    flag: false,
+                    startDate: '2024-08-01',
+                    endDate: '2024-08-31',
                 }
             }
-            res.json({ user: req.session.user });
+            res.json({ data: data });
         } else {
             res.status(401).json({ message: 'Unauthorized' });
         }

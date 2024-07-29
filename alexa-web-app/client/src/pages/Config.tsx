@@ -26,10 +26,18 @@ import TopBarImg from '../assets/img/FJ_GRAD_H3A_RGB.png';
 import IOSSwitch from '../parts/IosButton.tsx';
 import IOSSwitchWarning from '../parts/IosButtonWarning.tsx';
 
+// 型定義を追加
+interface ConfigData {
+    kisho: { flag: boolean; time: string; };
+    shoto: { flag: boolean; time: string; };
+    stop: { flag: boolean; startDate: string; endDate: string; };
+    [key: string]: { flag: boolean; time?: string; startDate?: string; endDate?: string; }; // インデックスシグネチャを追加
+}
+
 function Config() {
     const [loginFlag, setloginFlag] = useState(false);
     const [name, setName] = useState('');
-    const [configData, setConfigData] = useState({
+    const [configData, setConfigData] = useState<ConfigData>({
         kisho: {
             flag: true,
             time: '',
@@ -44,10 +52,6 @@ function Config() {
             endDate: '',
         }
     });
-
-    const [checked1, setChecked1] = useState(false);
-    const [checked2, setChecked2] = useState(true);
-    const [checked3, setChecked3] = useState(true);
 
     const navigate = useNavigate();
 
@@ -85,9 +89,6 @@ function Config() {
                         endDate: response.data.data.stop.endDate,
                     }
                 });
-                setChecked1(response.data.data.kisho.flag);
-                setChecked2(response.data.data.shoto.flag);
-                setChecked3(response.data.data.stop.flag);
                 setloginFlag(true);
             } catch (error) {
                 console.error('API呼び出し中にエラーが発生しました:', error);
@@ -97,18 +98,37 @@ function Config() {
         request();
     }, [navigate]);
 
-    
-    const handleChange1 = (event:React.ChangeEvent<HTMLInputElement>) => {
-        alert(event.target.checked);
-        setChecked1(event.target.checked);
+    const request = async (configData:ConfigData) => {
+        try {
+            const response = await axios.put('http://192.168.1.10:3001/api/config', configData,{
+                withCredentials: true
+            });
+
+            if (response.status != 200){
+                console.log('APIリクエストに失敗しました:', response.status);
+            }
+        } catch (error) {
+            console.error('API呼び出し中にエラーが発生しました:', error);
+            navigate('/login');
+        }
     };
-    const handleChange2 = (event:React.ChangeEvent<HTMLInputElement>) => {
-        alert(event.target.checked);
-        setChecked2(event.target.checked);
-    };
-    const handleChange3 = (event:React.ChangeEvent<HTMLInputElement>) => {
-        alert(event.target.checked);
-        setChecked3(event.target.checked);
+    const handleChange = (event:React.ChangeEvent<HTMLInputElement>) => {
+        const { name, checked, value} = event.target;
+        const className = (event.target as HTMLElement).getAttribute('data-class');
+        console.log(className);
+        console.log(name, checked);
+        const newConfigData:ConfigData = {
+            ...configData,
+            [className]: {
+                ...configData[className],
+                [name]: name === 'flag' ? checked : value,
+            }
+        };
+        console.log(newConfigData);
+        setConfigData(newConfigData);
+        request(newConfigData).then(() => {
+            alert(event.target.checked);
+        });
     };
 
     return (
@@ -126,7 +146,14 @@ function Config() {
                             >
                                 <TableCell component="th" scope="row">総員起こしラッパ</TableCell>
                                 <TableCell align="right">
-                                    <IOSSwitch sx={{ m: 1 }} defaultChecked checked={checked1} onChange={(e) => handleChange1(e)} />
+                                    <IOSSwitch 
+                                        sx={{ m: 1 }} 
+                                        data-class="kisho"
+                                        name="flag"
+                                        defaultChecked 
+                                        checked={configData.kisho.flag} 
+                                        onChange={(e) => handleChange(e)} 
+                                    />
                                 </TableCell>
                             </TableRow>
                             <TableRow
@@ -136,13 +163,16 @@ function Config() {
                                 <TableCell component="th" scope="row">時刻</TableCell>
                                 <TableCell align="right">
                                     <TextField
-                                        disabled={!checked1}
+                                        disabled={!configData.kisho.flag}
                                         id="time"
                                         type="time"
+                                        data-class="kisho"
+                                        name="time"
                                         defaultValue={configData.kisho.time}
                                         InputLabelProps={{
                                             shrink: true,
                                         }}
+                                        onChange={(e) => handleChange(e)} 
                                     />
                                 </TableCell>
                             </TableRow>
@@ -160,7 +190,14 @@ function Config() {
                             >
                                 <TableCell component="th" scope="row">消灯ラッパ</TableCell>
                                 <TableCell align="right">
-                                    <IOSSwitch sx={{ m: 1 }} defaultChecked checked={checked2} onChange={(e) => handleChange2(e)} />
+                                    <IOSSwitch 
+                                        sx={{ m: 1 }} 
+                                        data-class="shoto"
+                                        name="flag"
+                                        defaultChecked 
+                                        checked={configData.shoto.flag} 
+                                        onChange={(e) => handleChange(e)} 
+                                    />
                                 </TableCell>
                             </TableRow>
                         </TableBody>
@@ -177,7 +214,14 @@ function Config() {
                             >
                                 <TableCell component="th" scope="row">演奏停止</TableCell>
                                 <TableCell align="right">
-                                    <IOSSwitchWarning sx={{ m: 1 }} defaultChecked checked={checked3} onChange={(e) => handleChange3(e)} />
+                                    <IOSSwitchWarning 
+                                        sx={{ m: 1 }} 
+                                        data-class="stop"
+                                        name="flag"
+                                        defaultChecked 
+                                        checked={configData.stop.flag} 
+                                        onChange={(e) => handleChange(e)}
+                                    />
                                 </TableCell>
                             </TableRow>
                             <TableRow
@@ -188,10 +232,12 @@ function Config() {
                                 <TableCell align="right">
                                     <Box display="flex" justifyContent="flex-end" gap={2}>
                                         <TextField
-                                            disabled={!checked3}
+                                            disabled={!configData.stop.flag}
                                             label="開始日"
                                             id="start-date"
                                             type="date"
+                                            data-class="stop"
+                                            name="startDate"
                                             defaultValue={configData.stop.startDate}
                                             InputProps={{
                                                 inputProps: {
@@ -201,12 +247,15 @@ function Config() {
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}
+                                            onChange={(e) => handleChange(e)} 
                                         />
                                         <TextField
-                                            disabled={!checked3}
+                                            disabled={!configData.stop.flag}
                                             label="終了日"
                                             id="end-date"
                                             type="date"
+                                            data-class="stop"
+                                            name="endDate"
                                             defaultValue={configData.stop.endDate}
                                             InputProps={{
                                                 inputProps: {
@@ -216,6 +265,7 @@ function Config() {
                                             InputLabelProps={{
                                                 shrink: true,
                                             }}
+                                            onChange={(e) => handleChange(e)} 
                                         />
                                     </Box>
                                 </TableCell>

@@ -105,7 +105,7 @@ class App {
                     endDate: '2024-08-31',
                 }
             }
-            res.json({ data: data });
+            res.status(200).json({ data: data });
         } else {
             res.status(401).json({ message: 'Unauthorized' });
         }
@@ -115,8 +115,11 @@ class App {
         console.log('設定PUT通過！');
         console.log(req.session.user);
         if (req.session.user) {
-
-            res.json({ user: req.session.user });
+            const {kisho, shoto, stop} = req.body;
+            console.log(kisho);
+            console.log(shoto);
+            console.log(stop);
+            res.status(200).json({ user: req.session.user });
         } else {
             res.status(401).json({ message: 'Unauthorized' });
         }

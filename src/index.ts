@@ -264,6 +264,11 @@ class Main {
             console.log('1200');
             await this._alexa.shokuji();
         });
+        // 1300に実行する(平日)
+        cron.schedule('00 00 13 * * 1-5', async () => {
+            console.log('1300');
+            await this._alexa.kagyokaishi();
+        });
         // 1730に実行する
         cron.schedule('00 30 17 * * 1-5', async () => {
             console.log('1730');
@@ -286,7 +291,7 @@ class Main {
             console.log('devモードで起動します');
             await this._alexa.teijitenken();
             this.sleep(10000).then(async () => {
-                await this._alexa.akeome();
+                await this._alexa.kagyokaishi();
             });
         } else {
             console.log('通常モードで起動します');

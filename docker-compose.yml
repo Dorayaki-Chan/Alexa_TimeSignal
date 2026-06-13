@@ -10,5 +10,7 @@ services:
       - ./.env
     environment:
       SET_REFRESH_TOKEN: "${SET_REFRESH_TOKEN}"
+    # コンテナが異常終了しても自動再起動
+    restart: unless-stopped
       
     # command: ["./alexa_remote_control.sh",  "-e",  'speak:<audio src="${AUDIO_SOURCE}"/>こんにちは!Windowsのコマンドプロンプトから、Alexaに話させてみました。']

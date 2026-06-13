@@ -290,19 +290,21 @@ class Main {
         if (this._isDev) {
             console.log('devモードで起動します');
             await this._alexa.teijitenken();
-            this.sleep(10000).then(async () => {
-                await this._alexa.kagyokaishi();
-            });
+            await this.sleep(10000);
+            await this._alexa.kagyokaishi();
+            // devモードでもstart()を呼び出してcronスケジュールを開始
         } else {
             console.log('通常モードで起動します');
-            this._alexa.uchikatahajime();
-            this.sleep(10000).then(async () => {
-                await this.start();
-            });
+            await this._alexa.uchikatahajime();
+            await this.sleep(10000);
+            await this.start();
         }
     }
 }
 /**********/
 
 const main = Main.getInstance();
-main.run();
+main.run().catch(err => {
+    console.error('Fatal error:', err);
+    process.exit(1);
+});

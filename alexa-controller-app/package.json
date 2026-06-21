@@ -12,10 +12,19 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@holiday-jp/holiday_jp": "^2.5.1",
     "@types/node": "^20.11.16",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.1",
+    "express": "^5.2.1",
     "node-cron": "^3.0.3",
     "suncalc": "^1.9.0",
     "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node-cron": "^3.0.11",
+    "@types/suncalc": "^1.9.2"
   }
 }

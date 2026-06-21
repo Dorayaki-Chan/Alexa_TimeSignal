@@ -48,16 +48,21 @@ export class AlexaManager {
 
     private static readonly MAX_RETRIES = 2;
     private static readonly RETRY_DELAY_MS = 3000;
+    private static readonly DEVICES = ['アレクサ壱号機', 'アレクサ弐号機'];
 
-    private execSpeak(message: string): Promise<string> {
+    private execSpeakToDevice(device: string, message: string): Promise<string> {
         return new Promise((resolve, reject) => {
-            execFile('/app/alexa_remote_control.sh', ['-e', `speak:"${message}"`], (error, stdout, stderr) => {
-                if (error) {
-                    reject(new Error(`alexa_remote_control failed: ${error.message}\n${stderr}`));
-                    return;
+            execFile('/app/alexa_remote_control.sh',
+                ['-d', device, '-e', `speak:"${message}"`],
+                { env: { ...process.env, SPEAKVOL: '100', NORMALVOL: '30' } },
+                (error, stdout, stderr) => {
+                    if (error) {
+                        reject(new Error(`alexa_remote_control failed (${device}): ${error.message}\n${stderr}`));
+                        return;
+                    }
+                    resolve(stdout);
                 }
-                resolve(stdout);
-            });
+            );
         });
     }
 
@@ -65,7 +70,10 @@ export class AlexaManager {
         let lastError: Error | null = null;
         for (let attempt = 0; attempt <= AlexaManager.MAX_RETRIES; attempt++) {
             try {
-                return await this.execSpeak(message);
+                const results = await Promise.all(
+                    AlexaManager.DEVICES.map(device => this.execSpeakToDevice(device, message))
+                );
+                return results.join('\n');
             } catch (e: any) {
                 lastError = e;
                 if (attempt < AlexaManager.MAX_RETRIES) {

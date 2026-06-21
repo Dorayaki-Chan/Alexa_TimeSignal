@@ -1,0 +1,8 @@
+services:
+  alexa-cli:
+    build: .
+    container_name: alexa-cli-test
+    volumes:
+      - ../alexa-controller-app/alexa_remote_control.sh:/app/alexa_remote_control.sh
+    env_file:
+      - ../.env

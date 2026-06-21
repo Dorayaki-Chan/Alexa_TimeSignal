@@ -32,14 +32,15 @@ COPY ./alexa_remote_control.sh /app/
 # シェルスクリプトに権限を付与
 RUN chmod +x ./alexa_remote_control.sh
 
-# tsをコンパイル
+# クライアントをビルド
+COPY ./client /app/client
+RUN cd /app/client && npm install && npm run build
+
+# サーバーのtsをコンパイル
 RUN npm run build
+
+# APIサーバーのポート
+EXPOSE 3001
 
 # 起動！
 CMD ["npm", "run", "start"]
-
-# シェルスクリプトを実行
-# CMD ["./src/alexa_remote_control.sh",  "-e",  "speak:'こんにちは!Windowsのコマンドプロンプトから、Alexaに話させてみました。'"]
-# CMD ["./src/alexa_remote_control.sh", "-h"]
-
-

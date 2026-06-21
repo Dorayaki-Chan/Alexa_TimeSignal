@@ -6,4 +6,10 @@ node_modules/
 dist/
 # 環境変数
 .env
-
+1.env
+# ランタイムデータ
+data/
+# Viteビルド成果物
+alexa-controller-app/public/
+# TypeScriptビルドキャッシュ
+*.tsbuildinfo

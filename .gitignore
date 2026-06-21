@@ -10,3 +10,5 @@ dist/
 data/
 # Viteビルド成果物
 alexa-controller-app/public/
+# TypeScriptビルドキャッシュ
+*.tsbuildinfo

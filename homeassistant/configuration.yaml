@@ -17,14 +17,13 @@ input_boolean:
     name: 消灯ラッパ
     icon: mdi:weather-night
   alexa_stop_period_enabled:
-    name: 演奏停止期間:q:
+    name: 演奏停止期間
     icon: mdi:calendar-remove
+  alexa_next_wakeup_enabled:
+    name: 次回起床オーバーライド
+    icon: mdi:alarm-plus
 
 input_datetime:
-  alexa_kisho_time:
-    name: 起床時刻
-    has_date: false
-    has_time: true
   alexa_shoto_time:
     name: 消灯時刻
     has_date: false
@@ -35,6 +34,10 @@ input_datetime:
     has_time: true
   alexa_stop_end:
     name: 停止終了日時
+    has_date: true
+    has_time: true
+  alexa_next_wakeup_datetime:
+    name: 次回起床日時
     has_date: true
     has_time: true
 
@@ -52,6 +55,7 @@ rest:
           - stopPeriodActive
           - nextSignals
           - nextSignalTime
+          - nextWakeUpActive
 
 # --- REST コマンド ---
 rest_command:
@@ -65,8 +69,7 @@ rest_command:
       {
         "timeSignal": {"enabled": {{ (states('input_boolean.alexa_timesignal_enabled') == 'on') | tojson }}},
         "wakeUp": {
-          "enabled": {{ (states('input_boolean.alexa_kisho_enabled') == 'on') | tojson }},
-          "defaultTime": "{{ states('input_datetime.alexa_kisho_time') }}"
+          "enabled": {{ (states('input_boolean.alexa_kisho_enabled') == 'on') | tojson }}
         },
         "shoto": {
           "enabled": {{ (states('input_boolean.alexa_shoto_enabled') == 'on') | tojson }},
@@ -78,6 +81,11 @@ rest_command:
           "startTime": "{{ state_attr('input_datetime.alexa_stop_start', 'time') }}",
           "endDate": "{{ state_attr('input_datetime.alexa_stop_end', 'date') }}",
           "endTime": "{{ state_attr('input_datetime.alexa_stop_end', 'time') }}"
+        },
+        "nextWakeUp": {
+          "enabled": {{ (states('input_boolean.alexa_next_wakeup_enabled') == 'on') | tojson }},
+          "date": "{{ state_attr('input_datetime.alexa_next_wakeup_datetime', 'date') }}",
+          "time": "{{ state_attr('input_datetime.alexa_next_wakeup_datetime', 'time') }}"
         }
       }
 

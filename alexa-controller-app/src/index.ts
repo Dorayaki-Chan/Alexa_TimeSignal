@@ -15,7 +15,10 @@ if (!(process.env.AUDIO_SYUKKOU_PATH &&
       process.env.AUDIO_SHOTO_PATH &&
       process.env.AUDIO_KISHO_PATH &&
       process.env.AUDIO_TENKO_PATH &&
-      process.env.AUDIO_SHOKUJI_PATH)) {
+      process.env.AUDIO_SHOKUJI_PATH &&
+      process.env.AUDIO_KAGYOKAISHI_PATH&&
+      process.env.AUDIO_KAGYOSHURYO_PATH&&
+      process.env.AUDIO_AKEOME_PATH)) {
     console.error('ERROR: AUDIO_PATHが設定されていません。');
     process.exit(1);
 }

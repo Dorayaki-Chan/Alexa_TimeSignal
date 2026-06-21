@@ -47,8 +47,10 @@ export class Scheduler {
 
         this.scheduleMorningSequence(config);
         this.scheduleKimigayo(config);
+        this.scheduleWorkday(config);
         this.scheduleShoto(config);
         this.scheduleEvents(config);
+        this.scheduleAkeome();
         this.scheduleSunsetOnce();
 
         console.log(`スケジュール再構築完了: ${this.tasks.length}件のタスク登録`);
@@ -103,22 +105,21 @@ export class Scheduler {
         return config.nextWakeUp.date === todayStr;
     }
 
+    private isWeekdayToday(): boolean {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+        if (this.isHoliday(now)) return false;
+        return true;
+    }
+
     private shouldSkipMorning(config: AppConfig): boolean {
         if (this.shouldSkipToday(config)) return true;
 
         if (this.isNextWakeUpToday(config)) return false;
 
-        const now = new Date();
-        const dayOfWeek = now.getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-        if (isWeekend) {
-            console.log('週末のためスキップ');
-            return true;
-        }
-
-        if (this.isHoliday(now)) {
-            console.log('祝日のためスキップ');
+        if (!this.isWeekdayToday()) {
+            console.log('週末または祝日のためスキップ');
             return true;
         }
 
@@ -221,6 +222,76 @@ export class Scheduler {
         this.tasks.push(kimigayoTask);
     }
 
+    private scheduleWorkday(config: AppConfig): void {
+        // 08:45 課業開始（平日のみ）
+        const kagyokaishi1 = cron.schedule('0 45 8 * * *', async () => {
+            if (this.shouldSkipToday(this.configStore.get())) return;
+            if (!this.isWeekdayToday()) return;
+            try {
+                await this.alexa.kagyokaishi();
+                this.logger.log('signal', '課業開始ラッパ (08:45)');
+            } catch (e: any) {
+                this.logger.log('error', `課業開始ラッパ失敗: ${e.message}`);
+            }
+        });
+        this.tasks.push(kagyokaishi1);
+
+        // 12:00 平日→正午（課業終了+食事）、休日→食事ラッパのみ
+        const noonTask = cron.schedule('0 0 12 * * *', async () => {
+            if (this.shouldSkipToday(this.configStore.get())) return;
+            try {
+                if (this.isWeekdayToday()) {
+                    await this.alexa.shogo();
+                    this.logger.log('signal', '正午ラッパ (12:00)');
+                } else {
+                    await this.alexa.shokuji();
+                    this.logger.log('signal', '食事ラッパ (12:00 休日)');
+                }
+            } catch (e: any) {
+                this.logger.log('error', `正午/食事ラッパ失敗: ${e.message}`);
+            }
+        });
+        this.tasks.push(noonTask);
+
+        // 13:00 課業開始（平日のみ）
+        const kagyokaishi2 = cron.schedule('0 0 13 * * *', async () => {
+            if (this.shouldSkipToday(this.configStore.get())) return;
+            if (!this.isWeekdayToday()) return;
+            try {
+                await this.alexa.kagyokaishi();
+                this.logger.log('signal', '課業開始ラッパ (13:00)');
+            } catch (e: any) {
+                this.logger.log('error', `課業開始ラッパ失敗: ${e.message}`);
+            }
+        });
+        this.tasks.push(kagyokaishi2);
+
+        // 17:30 課業終了（平日のみ）
+        const kagyoshuryo = cron.schedule('0 30 17 * * *', async () => {
+            if (this.shouldSkipToday(this.configStore.get())) return;
+            if (!this.isWeekdayToday()) return;
+            try {
+                await this.alexa.kagyoshuryo();
+                this.logger.log('signal', '課業終了ラッパ (17:30)');
+            } catch (e: any) {
+                this.logger.log('error', `課業終了ラッパ失敗: ${e.message}`);
+            }
+        });
+        this.tasks.push(kagyoshuryo);
+    }
+
+    private scheduleAkeome(): void {
+        const akeomeTask = cron.schedule('0 0 0 1 1 *', async () => {
+            try {
+                await this.alexa.akeome();
+                this.logger.log('signal', 'あけおめ (元旦)');
+            } catch (e: any) {
+                this.logger.log('error', `あけおめ失敗: ${e.message}`);
+            }
+        });
+        this.tasks.push(akeomeTask);
+    }
+
     private scheduleShoto(config: AppConfig): void {
         if (!config.shoto.enabled) return;
 
@@ -314,6 +385,15 @@ export class Scheduler {
             allSignals.push({ time: this.formatTime(shokuji.hours, shokuji.minutes), name: '食事ラッパ' });
         }
         allSignals.push({ time: '07:59', name: '君が代（朝）' });
+
+        if (this.isWeekdayToday()) {
+            allSignals.push({ time: '08:45', name: '課業開始ラッパ' });
+            allSignals.push({ time: '12:00', name: '正午ラッパ' });
+            allSignals.push({ time: '13:00', name: '課業開始ラッパ' });
+            allSignals.push({ time: '17:30', name: '課業終了ラッパ' });
+        } else {
+            allSignals.push({ time: '12:00', name: '食事ラッパ（休日）' });
+        }
 
         try {
             const sunsetTime = this.sun.getSunsetTimeString();

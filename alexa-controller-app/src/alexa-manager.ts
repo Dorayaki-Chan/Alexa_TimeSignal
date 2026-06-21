@@ -13,6 +13,9 @@ export class AlexaManager {
     private AUDIO_KISHO_PATH: string;
     private AUDIO_TENKO_PATH: string;
     private AUDIO_SHOKUJI_PATH: string;
+    private AUDIO_KAGYOKAISHI_PATH:string;
+    private AUDIO_KAGYOSHURYO_PATH:string;
+    private AUDIO_AKEOME_PATH:string;
 
     private AUDIO_ZAREI_PATH: string;
     private AUDIO_TANFU_PATH: string;
@@ -31,6 +34,9 @@ export class AlexaManager {
         this.AUDIO_KISHO_PATH = process.env.AUDIO_KISHO_PATH!;
         this.AUDIO_TENKO_PATH = process.env.AUDIO_TENKO_PATH!;
         this.AUDIO_SHOKUJI_PATH = process.env.AUDIO_SHOKUJI_PATH!;
+        this.AUDIO_KAGYOKAISHI_PATH = process.env.AUDIO_KAGYOKAISHI_PATH!;
+        this.AUDIO_KAGYOSHURYO_PATH = process.env.AUDIO_KAGYOSHURYO_PATH!;
+        this.AUDIO_AKEOME_PATH = process.env.AUDIO_AKEOME_PATH!;
 
         this.AUDIO_ZAREI_PATH = process.env.AUDIO_ZAREI_PATH || '';
         this.AUDIO_TANFU_PATH = process.env.AUDIO_TANFU_PATH || '';
@@ -165,5 +171,25 @@ export class AlexaManager {
     public async shokuji(): Promise<void> {
         console.log('start of shokuji');
         await this.speak(`<audio src='${this.AUDIO_SHOKUJI_PATH}'/>`);
+    }
+    public async kagyokaishi(): Promise<void> {
+        console.log('start of kagyokaishi');
+        await this.speak(`<audio src='${this.AUDIO_KAGYOKAISHI_PATH}'/>`);
+    }
+    public async kagyoshuryo(): Promise<void> {
+        console.log('start of kagyoshuryo');
+        await this.speak(`<audio src='${this.AUDIO_KAGYOSHURYO_PATH}'/>`);
+    }
+    public async akeome(): Promise<void> {
+        console.log('start of akeome');
+        await this.speak(`<audio src='${this.AUDIO_AKEOME_PATH}'/>`);
+    }
+    public async shogo():Promise<void>{
+        console.log('start of shogo');
+        await this.speak(`
+            <audio src='${this.AUDIO_KAGYOSHURYO_PATH}'/>
+            <break time='1s'/>
+            <audio src='${this.AUDIO_SHOKUJI_PATH}'/>
+        `);
     }
 }

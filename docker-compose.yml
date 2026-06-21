@@ -17,3 +17,5 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+      
+    # command: ["./alexa_remote_control.sh",  "-e",  'speak:<audio src="${AUDIO_SOURCE}"/>こんにちは!Windowsのコマンドプロンプトから、Alexaに話させてみました。']

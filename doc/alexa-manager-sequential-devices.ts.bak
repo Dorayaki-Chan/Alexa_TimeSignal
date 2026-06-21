@@ -1,0 +1,51 @@
+// バックアップ: 個別デバイス順次送信方式（3秒インターバル）
+// 壱号機・弐号機に個別にコマンドを送る方式。
+// レート制限回避のため3秒間隔を空けるが、デバイス間の発音タイミングがずれる。
+
+    private static readonly MAX_RETRIES = 2;
+    private static readonly RETRY_DELAY_MS = 3000;
+    private static readonly DEVICE_INTERVAL_MS = 3000;
+    private static readonly DEVICES = ['アレクサ壱号機', 'アレクサ弐号機'];
+
+    private execSpeakToDevice(device: string, message: string): Promise<string> {
+        return new Promise((resolve, reject) => {
+            execFile('/app/alexa_remote_control.sh',
+                ['-d', device, '-e', `speak:"${message}"`],
+                { env: { ...process.env, SPEAKVOL: '100', NORMALVOL: '30' } },
+                (error, stdout, stderr) => {
+                    if (error) {
+                        reject(new Error(`alexa_remote_control failed (${device}): ${error.message}\n${stderr}`));
+                        return;
+                    }
+                    resolve(stdout);
+                }
+            );
+        });
+    }
+
+    private async speak(message: string): Promise<string> {
+        const results: string[] = [];
+        for (let i = 0; i < AlexaManager.DEVICES.length; i++) {
+            const device = AlexaManager.DEVICES[i];
+            if (i > 0) {
+                await new Promise(r => setTimeout(r, AlexaManager.DEVICE_INTERVAL_MS));
+            }
+            let lastError: Error | null = null;
+            for (let attempt = 0; attempt <= AlexaManager.MAX_RETRIES; attempt++) {
+                try {
+                    results.push(await this.execSpeakToDevice(device, message));
+                    break;
+                } catch (e: any) {
+                    lastError = e;
+                    if (attempt < AlexaManager.MAX_RETRIES) {
+                        console.error(`Alexa通信失敗 ${device} (試行${attempt + 1}/${AlexaManager.MAX_RETRIES + 1}): ${e.message}`);
+                        await new Promise(r => setTimeout(r, AlexaManager.RETRY_DELAY_MS));
+                    }
+                }
+            }
+            if (results.length < i + 1) {
+                console.error(`${device} への送信が全リトライ失敗: ${lastError?.message}`);
+            }
+        }
+        return results.join('\n');
+    }

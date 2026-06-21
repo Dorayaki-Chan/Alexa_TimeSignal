@@ -54,13 +54,15 @@ export class AlexaManager {
 
     private static readonly MAX_RETRIES = 2;
     private static readonly RETRY_DELAY_MS = 3000;
+    private static readonly DEVICE_INTERVAL_MS = 3000;
     private static readonly DEVICES = ['アレクサ壱号機', 'アレクサ弐号機'];
+    private static readonly SPEAK_VOL = 100;
+    private static readonly NORMAL_VOL = 30;
 
-    private execSpeakToDevice(device: string, message: string): Promise<string> {
+    private execCommand(device: string, command: string): Promise<string> {
         return new Promise((resolve, reject) => {
             execFile('/app/alexa_remote_control.sh',
-                ['-d', device, '-e', `speak:"${message}"`],
-                { env: { ...process.env, SPEAKVOL: '100', NORMALVOL: '30' } },
+                ['-d', device, '-e', command],
                 (error, stdout, stderr) => {
                     if (error) {
                         reject(new Error(`alexa_remote_control failed (${device}): ${error.message}\n${stderr}`));
@@ -72,14 +74,44 @@ export class AlexaManager {
         });
     }
 
-    private async speak(message: string): Promise<string> {
+    private async setVolumeAll(vol: number): Promise<void> {
+        for (let i = 0; i < AlexaManager.DEVICES.length; i++) {
+            if (i > 0) await new Promise(r => setTimeout(r, AlexaManager.DEVICE_INTERVAL_MS));
+            try {
+                await this.execCommand(AlexaManager.DEVICES[i], `vol:${vol}`);
+            } catch (e: any) {
+                console.error(`音量設定失敗 ${AlexaManager.DEVICES[i]}: ${e.message}`);
+            }
+        }
+    }
+
+    private execSpeak(message: string): Promise<string> {
+        return new Promise((resolve, reject) => {
+            execFile('/app/alexa_remote_control.sh',
+                ['-d', '全部の部屋', '-e', `speak:"${message}"`],
+                (error, stdout, stderr) => {
+                    if (error) {
+                        reject(new Error(`alexa_remote_control failed: ${error.message}\n${stderr}`));
+                        return;
+                    }
+                    resolve(stdout);
+                }
+            );
+        });
+    }
+
+    private async speak(message: string, durationMs: number = 30000): Promise<string> {
+        await this.setVolumeAll(AlexaManager.SPEAK_VOL);
+        await new Promise(r => setTimeout(r, AlexaManager.DEVICE_INTERVAL_MS));
+
+        let result: string;
         let lastError: Error | null = null;
         for (let attempt = 0; attempt <= AlexaManager.MAX_RETRIES; attempt++) {
             try {
-                const results = await Promise.all(
-                    AlexaManager.DEVICES.map(device => this.execSpeakToDevice(device, message))
-                );
-                return results.join('\n');
+                result = await this.execSpeak(message);
+                await new Promise(r => setTimeout(r, durationMs));
+                await this.setVolumeAll(AlexaManager.NORMAL_VOL);
+                return result;
             } catch (e: any) {
                 lastError = e;
                 if (attempt < AlexaManager.MAX_RETRIES) {
@@ -88,6 +120,7 @@ export class AlexaManager {
                 }
             }
         }
+        await this.setVolumeAll(AlexaManager.NORMAL_VOL);
         throw lastError!;
     }
 
@@ -135,7 +168,7 @@ export class AlexaManager {
                 <prosody volume='x-fast'>かかれ</prosody>
             </amazon:emotion>
             <audio src='${this.AUDIO_KAKARE_PATH}'/>
-        `);
+        `, 90000);
     }
 
     public async syukkou(): Promise<void> {
@@ -155,7 +188,7 @@ export class AlexaManager {
 
     public async shoto(): Promise<void> {
         console.log('start of shoto');
-        await this.speak(`<audio src='${this.AUDIO_SHOTO_PATH}'/>`);
+        await this.speak(`<audio src='${this.AUDIO_SHOTO_PATH}'/>`, 90000);
     }
 
     public async kisho(): Promise<void> {

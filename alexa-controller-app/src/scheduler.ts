@@ -126,6 +126,8 @@ export class Scheduler {
         return false;
     }
 
+    private static readonly LEAD_TIME_SEC = 8;
+
     private parseTime(timeStr: string): { hours: number; minutes: number } {
         const [h, m] = timeStr.split(':').map(Number);
         return { hours: h, minutes: m };
@@ -135,6 +137,16 @@ export class Scheduler {
         const { hours, minutes } = this.parseTime(timeStr);
         const total = hours * 60 + minutes + addMin;
         return { hours: Math.floor(total / 60) % 24, minutes: total % 60 };
+    }
+
+    private toCronWithLeadTime(hours: number, minutes: number, seconds: number = 0): string {
+        const lead = Scheduler.LEAD_TIME_SEC;
+        let totalSec = hours * 3600 + minutes * 60 + seconds - lead;
+        if (totalSec < 0) totalSec += 24 * 3600;
+        const h = Math.floor(totalSec / 3600) % 24;
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        return `${s} ${m} ${h}`;
     }
 
     private getMorningBaseTime(config: AppConfig): string {
@@ -158,7 +170,7 @@ export class Scheduler {
         const shokujiTime = this.addMinutes(baseTime, 20);
         const isOverride = this.isNextWakeUpToday(config);
 
-        const kishoTask = cron.schedule(`0 ${kishoTime.minutes} ${kishoTime.hours} * * *`, async () => {
+        const kishoTask = cron.schedule(`${this.toCronWithLeadTime(kishoTime.hours, kishoTime.minutes)} * * *`, async () => {
             if (this.shouldSkipMorning(this.configStore.get())) return;
             try {
                 await this.alexa.kisho();
@@ -169,7 +181,7 @@ export class Scheduler {
         });
         this.tasks.push(kishoTask);
 
-        const tenkoTask = cron.schedule(`0 ${tenkoTime.minutes} ${tenkoTime.hours} * * *`, async () => {
+        const tenkoTask = cron.schedule(`${this.toCronWithLeadTime(tenkoTime.hours, tenkoTime.minutes)} * * *`, async () => {
             if (this.shouldSkipMorning(this.configStore.get())) return;
             try {
                 await this.alexa.tenko();
@@ -180,7 +192,7 @@ export class Scheduler {
         });
         this.tasks.push(tenkoTask);
 
-        const shokujiTask = cron.schedule(`0 ${shokujiTime.minutes} ${shokujiTime.hours} * * *`, async () => {
+        const shokujiTask = cron.schedule(`${this.toCronWithLeadTime(shokujiTime.hours, shokujiTime.minutes)} * * *`, async () => {
             if (this.shouldSkipMorning(this.configStore.get())) return;
             try {
                 await this.alexa.shokuji();
@@ -196,8 +208,8 @@ export class Scheduler {
     }
 
     private scheduleKimigayo(config: AppConfig): void {
-        // 毎日 07:59:50 に君が代（朝の時報）
-        const kimigayoTask = cron.schedule('50 59 7 * * *', async () => {
+        // 毎日 07:59:50 に君が代（朝の時報）— 音量設定分を前倒し
+        const kimigayoTask = cron.schedule(`${this.toCronWithLeadTime(7, 59, 50)} * * *`, async () => {
             if (this.shouldSkipToday(this.configStore.get())) return;
             try {
                 await this.alexa.kimigayo();
@@ -213,7 +225,7 @@ export class Scheduler {
                         } catch (e: any) {
                             this.logger.log('error', `君が代（日没）失敗: ${e.message}`);
                         }
-                    }, intervalTime - 10000);
+                    }, intervalTime - 10000 - Scheduler.LEAD_TIME_SEC * 1000);
                 }
             } catch (e: any) {
                 this.logger.log('error', `君が代（朝）失敗: ${e.message}`);
@@ -224,7 +236,7 @@ export class Scheduler {
 
     private scheduleWorkday(config: AppConfig): void {
         // 08:45 課業開始（平日のみ）
-        const kagyokaishi1 = cron.schedule('0 45 8 * * *', async () => {
+        const kagyokaishi1 = cron.schedule(`${this.toCronWithLeadTime(8, 45)} * * *`, async () => {
             if (this.shouldSkipToday(this.configStore.get())) return;
             if (!this.isWeekdayToday()) return;
             try {
@@ -237,7 +249,7 @@ export class Scheduler {
         this.tasks.push(kagyokaishi1);
 
         // 12:00 平日→正午（課業終了+食事）、休日→食事ラッパのみ
-        const noonTask = cron.schedule('0 0 12 * * *', async () => {
+        const noonTask = cron.schedule(`${this.toCronWithLeadTime(12, 0)} * * *`, async () => {
             if (this.shouldSkipToday(this.configStore.get())) return;
             try {
                 if (this.isWeekdayToday()) {
@@ -254,7 +266,7 @@ export class Scheduler {
         this.tasks.push(noonTask);
 
         // 13:00 課業開始（平日のみ）
-        const kagyokaishi2 = cron.schedule('0 0 13 * * *', async () => {
+        const kagyokaishi2 = cron.schedule(`${this.toCronWithLeadTime(13, 0)} * * *`, async () => {
             if (this.shouldSkipToday(this.configStore.get())) return;
             if (!this.isWeekdayToday()) return;
             try {
@@ -267,7 +279,7 @@ export class Scheduler {
         this.tasks.push(kagyokaishi2);
 
         // 17:30 課業終了（平日のみ）
-        const kagyoshuryo = cron.schedule('0 30 17 * * *', async () => {
+        const kagyoshuryo = cron.schedule(`${this.toCronWithLeadTime(17, 30)} * * *`, async () => {
             if (this.shouldSkipToday(this.configStore.get())) return;
             if (!this.isWeekdayToday()) return;
             try {
@@ -281,7 +293,7 @@ export class Scheduler {
     }
 
     private scheduleAkeome(): void {
-        const akeomeTask = cron.schedule('0 0 0 1 1 *', async () => {
+        const akeomeTask = cron.schedule(`${this.toCronWithLeadTime(0, 0)} 1 1 *`, async () => {
             try {
                 await this.alexa.akeome();
                 this.logger.log('signal', 'あけおめ (元旦)');
@@ -296,7 +308,7 @@ export class Scheduler {
         if (!config.shoto.enabled) return;
 
         const { hours, minutes } = this.parseTime(config.shoto.time);
-        const shotoTask = cron.schedule(`0 ${minutes} ${hours} * * *`, async () => {
+        const shotoTask = cron.schedule(`${this.toCronWithLeadTime(hours, minutes)} * * *`, async () => {
             if (this.shouldSkipToday(this.configStore.get())) return;
             try {
                 await this.alexa.shoto();
@@ -317,7 +329,7 @@ export class Scheduler {
                 if (event.date < todayStr) return;
             }
 
-            const task = cron.schedule(`0 ${minutes} ${hours} * * *`, async () => {
+            const task = cron.schedule(`${this.toCronWithLeadTime(hours, minutes)} * * *`, async () => {
                 const currentConfig = this.configStore.get();
                 if (this.shouldSkipToday(currentConfig)) return;
 
@@ -357,7 +369,7 @@ export class Scheduler {
                     } catch (e: any) {
                         this.logger.log('error', `君が代（日没・起動時）失敗: ${e.message}`);
                     }
-                }, intervalTime - 10000);
+                }, intervalTime - 10000 - Scheduler.LEAD_TIME_SEC * 1000);
                 console.log('起動時の日没スケジュールを設定しました');
             }
         } catch (e: any) {

@@ -1,5 +1,6 @@
 type: entities
 title: Alexa時報
+show_header_toggle: false
 entities:
   - entity: input_boolean.alexa_timesignal_enabled
   - entity: input_boolean.alexa_kisho_enabled

@@ -1,0 +1,98 @@
+# ============================================
+# Alexa時報 HomeAssistant設定テンプレート
+# ============================================
+# このファイルの内容をHomeAssistantの configuration.yaml に追記してください。
+# HA_API_KEY は secrets.yaml に alexa_api_key として登録してください。
+# alexa-controller のIPアドレスは環境に合わせて変更してください。
+
+# --- 入力ヘルパー ---
+input_boolean:
+  alexa_timesignal_enabled:
+    name: 時報マスタースイッチ
+    icon: mdi:bugle
+  alexa_kisho_enabled:
+    name: 起床ラッパ
+    icon: mdi:alarm
+  alexa_shoto_enabled:
+    name: 消灯ラッパ
+    icon: mdi:weather-night
+  alexa_stop_period_enabled:
+    name: 演奏停止期間
+    icon: mdi:calendar-remove
+  alexa_next_wakeup_enabled:
+    name: 次回起床オーバーライド
+    icon: mdi:alarm-plus
+
+input_datetime:
+  alexa_shoto_time:
+    name: 消灯時刻
+    has_date: false
+    has_time: true
+  alexa_stop_start:
+    name: 停止開始日時
+    has_date: true
+    has_time: true
+  alexa_stop_end:
+    name: 停止終了日時
+    has_date: true
+    has_time: true
+  alexa_next_wakeup_datetime:
+    name: 次回起床日時
+    has_date: true
+    has_time: true
+
+# --- REST センサー ---
+rest:
+  - resource: http://<your-ip-address>:3001/api/status
+    headers:
+      X-API-Key: !secret alexa_api_key
+    scan_interval: 60
+    sensor:
+      - name: Alexa時報ステータス
+        value_template: "{{ value_json.nextSignalName }}"
+        json_attributes:
+          - active
+          - stopPeriodActive
+          - nextSignals
+          - nextSignalTime
+          - nextWakeUpActive
+
+# --- REST コマンド ---
+rest_command:
+  alexa_update_config:
+    url: http://<your-ip-address>:3001/api/config
+    method: PUT
+    headers:
+      X-API-Key: !secret alexa_api_key
+      Content-Type: application/json
+    payload: >-
+      {
+        "timeSignal": {"enabled": {{ (states('input_boolean.alexa_timesignal_enabled') == 'on') | tojson }}},
+        "wakeUp": {
+          "enabled": {{ (states('input_boolean.alexa_kisho_enabled') == 'on') | tojson }}
+        },
+        "shoto": {
+          "enabled": {{ (states('input_boolean.alexa_shoto_enabled') == 'on') | tojson }},
+          "time": "{{ states('input_datetime.alexa_shoto_time') }}"
+        },
+        "stopPeriod": {
+          "enabled": {{ (states('input_boolean.alexa_stop_period_enabled') == 'on') | tojson }},
+          "startDate": "{{ state_attr('input_datetime.alexa_stop_start', 'date') }}",
+          "startTime": "{{ state_attr('input_datetime.alexa_stop_start', 'time') }}",
+          "endDate": "{{ state_attr('input_datetime.alexa_stop_end', 'date') }}",
+          "endTime": "{{ state_attr('input_datetime.alexa_stop_end', 'time') }}"
+        },
+        "nextWakeUp": {
+          "enabled": {{ (states('input_boolean.alexa_next_wakeup_enabled') == 'on') | tojson }},
+          "date": "{{ state_attr('input_datetime.alexa_next_wakeup_datetime', 'date') }}",
+          "time": "{{ state_attr('input_datetime.alexa_next_wakeup_datetime', 'time') }}"
+        }
+      }
+
+# --- iframe パネル（イベント時報管理） ---
+panel_iframe:
+  alexa_events:
+    title: イベント時報
+    url: http://<your-ip-address>:3001
+    icon: mdi:bugle
+    require_admin: false

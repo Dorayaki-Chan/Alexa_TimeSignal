@@ -1,0 +1,39 @@
+- id: alexa_timesignal_sync
+  alias: Alexa時報 設定同期
+  description: HA上の設定変更をAlexa時報APIに同期する
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id:
+        - input_boolean.alexa_timesignal_enabled
+        - input_boolean.alexa_kisho_enabled
+        - input_boolean.alexa_shoto_enabled
+        - input_boolean.alexa_stop_period_enabled
+        - input_boolean.alexa_next_wakeup_enabled
+    - trigger: state
+      entity_id:
+        - input_datetime.alexa_shoto_time
+        - input_datetime.alexa_stop_start
+        - input_datetime.alexa_stop_end
+        - input_datetime.alexa_next_wakeup_datetime
+  conditions: []
+  actions:
+    - action: rest_command.alexa_update_config
+
+- id: alexa_next_wakeup_auto_off
+  alias: Alexa時報 次回起床オーバーライド自動OFF
+  description: バックエンド側でオーバーライドがクリアされたらHA側のトグルもOFFにする
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id: sensor.alexa時報ステータス
+      attribute: nextWakeUpActive
+      to: false
+  conditions:
+    - condition: state
+      entity_id: input_boolean.alexa_next_wakeup_enabled
+      state: "on"
+  actions:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.alexa_next_wakeup_enabled

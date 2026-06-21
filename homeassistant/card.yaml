@@ -1,0 +1,22 @@
+type: entities
+title: Alexa時報
+show_header_toggle: false
+entities:
+  - entity: input_boolean.alexa_timesignal_enabled
+  - entity: input_boolean.alexa_kisho_enabled
+  - entity: input_boolean.alexa_shoto_enabled
+  - entity: input_datetime.alexa_shoto_time
+  - type: divider
+  - entity: input_boolean.alexa_stop_period_enabled
+  - entity: input_datetime.alexa_stop_start
+  - entity: input_datetime.alexa_stop_end
+  - type: divider
+  - entity: input_boolean.alexa_next_wakeup_enabled
+  - entity: input_datetime.alexa_next_wakeup_datetime
+  - type: divider
+  - entity: sensor.alexa時報ステータス
+
+# --- イベント管理iframe（別カードとして追加） ---
+# type: iframe
+# url: http://<your-ip-address>:3001/
+# aspect_ratio: 50%

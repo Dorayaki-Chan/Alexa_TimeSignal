@@ -97,19 +97,27 @@ export class Scheduler {
         return false;
     }
 
+    private isNextWakeUpToday(config: AppConfig): boolean {
+        if (!config.nextWakeUp.enabled || !config.nextWakeUp.date) return false;
+        const todayStr = new Date().toISOString().split('T')[0];
+        return config.nextWakeUp.date === todayStr;
+    }
+
     private shouldSkipMorning(config: AppConfig): boolean {
         if (this.shouldSkipToday(config)) return true;
+
+        if (this.isNextWakeUpToday(config)) return false;
 
         const now = new Date();
         const dayOfWeek = now.getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-        if (isWeekend && !config.wakeUp.weekendEnabled) {
+        if (isWeekend) {
             console.log('週末のためスキップ');
             return true;
         }
 
-        if (!isWeekend && this.isHoliday(now) && !config.wakeUp.holidayEnabled) {
+        if (this.isHoliday(now)) {
             console.log('祝日のためスキップ');
             return true;
         }
@@ -128,18 +136,32 @@ export class Scheduler {
         return { hours: Math.floor(total / 60) % 24, minutes: total % 60 };
     }
 
-    private scheduleMorningSequence(config: AppConfig): void {
-        if (!config.wakeUp.enabled) return;
+    private getMorningBaseTime(config: AppConfig): string {
+        if (this.isNextWakeUpToday(config) && config.nextWakeUp.time) {
+            return config.nextWakeUp.time;
+        }
+        return '07:00';
+    }
 
-        const kishoTime = this.parseTime(config.wakeUp.defaultTime);
-        const tenkoTime = this.addMinutes(config.wakeUp.defaultTime, 10);
-        const shokujiTime = this.addMinutes(config.wakeUp.defaultTime, 20);
+    private clearNextWakeUp(): void {
+        this.configStore.update({ nextWakeUp: { enabled: false, date: '', time: '07:00' } });
+        this.logger.log('system', '次回起床オーバーライドをクリアしました');
+    }
+
+    private scheduleMorningSequence(config: AppConfig): void {
+        if (!config.wakeUp.enabled && !this.isNextWakeUpToday(config)) return;
+
+        const baseTime = this.getMorningBaseTime(config);
+        const kishoTime = this.parseTime(baseTime);
+        const tenkoTime = this.addMinutes(baseTime, 10);
+        const shokujiTime = this.addMinutes(baseTime, 20);
+        const isOverride = this.isNextWakeUpToday(config);
 
         const kishoTask = cron.schedule(`0 ${kishoTime.minutes} ${kishoTime.hours} * * *`, async () => {
             if (this.shouldSkipMorning(this.configStore.get())) return;
             try {
                 await this.alexa.kisho();
-                this.logger.log('signal', `起床ラッパ (${config.wakeUp.defaultTime})`);
+                this.logger.log('signal', `起床ラッパ (${baseTime}${isOverride ? ' オーバーライド' : ''})`);
             } catch (e: any) {
                 this.logger.log('error', `起床ラッパ失敗: ${e.message}`);
             }
@@ -162,6 +184,9 @@ export class Scheduler {
             try {
                 await this.alexa.shokuji();
                 this.logger.log('signal', '食事ラッパ');
+                if (this.isNextWakeUpToday(this.configStore.get())) {
+                    this.clearNextWakeUp();
+                }
             } catch (e: any) {
                 this.logger.log('error', `食事ラッパ失敗: ${e.message}`);
             }
@@ -279,11 +304,13 @@ export class Scheduler {
 
         if (!config.timeSignal.enabled) return [];
 
-        if (config.wakeUp.enabled) {
-            allSignals.push({ time: config.wakeUp.defaultTime, name: '起床ラッパ' });
-            const tenko = this.addMinutes(config.wakeUp.defaultTime, 10);
+        if (config.wakeUp.enabled || this.isNextWakeUpToday(config)) {
+            const baseTime = this.getMorningBaseTime(config);
+            const overrideLabel = this.isNextWakeUpToday(config) ? '(オーバーライド)' : '';
+            allSignals.push({ time: baseTime, name: `起床ラッパ${overrideLabel}` });
+            const tenko = this.addMinutes(baseTime, 10);
             allSignals.push({ time: this.formatTime(tenko.hours, tenko.minutes), name: '点呼ラッパ' });
-            const shokuji = this.addMinutes(config.wakeUp.defaultTime, 20);
+            const shokuji = this.addMinutes(baseTime, 20);
             allSignals.push({ time: this.formatTime(shokuji.hours, shokuji.minutes), name: '食事ラッパ' });
         }
         allSignals.push({ time: '07:59', name: '君が代（朝）' });

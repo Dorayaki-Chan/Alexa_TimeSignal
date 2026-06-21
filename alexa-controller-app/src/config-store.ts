@@ -6,13 +6,11 @@ import { AppConfig } from './types';
 const DEFAULT_CONFIG: AppConfig = {
     wakeUp: {
         enabled: true,
-        defaultTime: '07:00',
-        weekendEnabled: false,
-        holidayEnabled: false,
     },
     timeSignal: { enabled: true },
     shoto: { enabled: true, time: '23:00' },
     stopPeriod: { enabled: false, startDate: '', endDate: '', startTime: '00:00', endTime: '23:59' },
+    nextWakeUp: { enabled: false, date: '', time: '07:00' },
     events: [],
 };
 

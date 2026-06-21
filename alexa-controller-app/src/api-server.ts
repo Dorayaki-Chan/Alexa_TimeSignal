@@ -183,6 +183,7 @@ export class ApiServer {
         res.json({
             active: config.timeSignal.enabled,
             stopPeriodActive: config.stopPeriod.enabled,
+            nextWakeUpActive: config.nextWakeUp.enabled && config.nextWakeUp.date !== '',
             nextSignals,
             nextSignalName: nextSignals.length > 0 ? nextSignals[0].name : 'なし',
             nextSignalTime: nextSignals.length > 0 ? nextSignals[0].time : '',

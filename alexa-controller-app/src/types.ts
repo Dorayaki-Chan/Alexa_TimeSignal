@@ -1,8 +1,11 @@
 export interface WakeUpConfig {
     enabled: boolean;
-    defaultTime: string;
-    weekendEnabled: boolean;
-    holidayEnabled: boolean;
+}
+
+export interface NextWakeUpConfig {
+    enabled: boolean;
+    date: string;
+    time: string;
 }
 
 export interface ShotoConfig {
@@ -35,6 +38,7 @@ export interface AppConfig {
     timeSignal: { enabled: boolean };
     shoto: ShotoConfig;
     stopPeriod: StopPeriodConfig;
+    nextWakeUp: NextWakeUpConfig;
     events: EventSignal[];
 }
 

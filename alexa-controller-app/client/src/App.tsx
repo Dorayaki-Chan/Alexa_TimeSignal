@@ -25,6 +25,8 @@ import Paper from '@mui/material/Paper'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import RepeatIcon from '@mui/icons-material/Repeat'
+import EventIcon from '@mui/icons-material/Event'
 import { EventSignal, SidePipeSound, SOUND_LABELS } from './types'
 
 const API_BASE = ''
@@ -49,13 +51,14 @@ const SOUNDS: SidePipeSound[] = ['zarei', 'tanfu', 'souin', 'wakare', 'genmon_so
 function App() {
   const [events, setEvents] = useState<EventSignal[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<EventSignal | null>(null)
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' })
 
-  const [newTime, setNewTime] = useState('08:00')
-  const [newSound, setNewSound] = useState<SidePipeSound>('zarei')
-  const [newAnnouncement, setNewAnnouncement] = useState('')
-  const [newRecurring, setNewRecurring] = useState(true)
-  const [newDate, setNewDate] = useState('')
+  const [formTime, setFormTime] = useState('08:00')
+  const [formSound, setFormSound] = useState<SidePipeSound>('zarei')
+  const [formAnnouncement, setFormAnnouncement] = useState('')
+  const [formRecurring, setFormRecurring] = useState(true)
+  const [formDate, setFormDate] = useState('')
 
   const loadEvents = useCallback(async () => {
     try {
@@ -69,29 +72,69 @@ function App() {
 
   useEffect(() => { loadEvents() }, [loadEvents])
 
-  const handleAdd = async () => {
-    if (!newAnnouncement.trim()) {
+  const resetForm = () => {
+    setFormTime('08:00')
+    setFormSound('zarei')
+    setFormAnnouncement('')
+    setFormRecurring(true)
+    setFormDate('')
+  }
+
+  const openAddDialog = () => {
+    setEditingEvent(null)
+    resetForm()
+    setDialogOpen(true)
+  }
+
+  const openEditDialog = (event: EventSignal) => {
+    setEditingEvent(event)
+    setFormTime(event.time)
+    setFormSound(event.sound)
+    setFormAnnouncement(event.announcement)
+    setFormRecurring(event.recurring)
+    setFormDate(event.date || '')
+    setDialogOpen(true)
+  }
+
+  const closeDialog = () => {
+    setDialogOpen(false)
+    setEditingEvent(null)
+    resetForm()
+  }
+
+  const handleSave = async () => {
+    if (!formAnnouncement.trim()) {
       setSnackbar({ open: true, message: '号令を入力してください', severity: 'error' })
       return
     }
+
+    const body = {
+      time: formTime,
+      sound: formSound,
+      announcement: formAnnouncement.trim(),
+      recurring: formRecurring,
+      date: formRecurring ? undefined : formDate,
+    }
+
     try {
-      await apiFetch('/api/events', {
-        method: 'POST',
-        body: JSON.stringify({
-          time: newTime,
-          sound: newSound,
-          announcement: newAnnouncement.trim(),
-          recurring: newRecurring,
-          date: newRecurring ? undefined : newDate,
-        }),
-      })
-      setDialogOpen(false)
-      resetForm()
+      if (editingEvent) {
+        await apiFetch(`/api/events/${editingEvent.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(body),
+        })
+        setSnackbar({ open: true, message: 'イベントを更新しました', severity: 'success' })
+      } else {
+        await apiFetch('/api/events', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        })
+        setSnackbar({ open: true, message: 'イベントを追加しました', severity: 'success' })
+      }
+      closeDialog()
       await loadEvents()
-      setSnackbar({ open: true, message: 'イベントを追加しました', severity: 'success' })
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Unknown error'
-      setSnackbar({ open: true, message: `追加失敗: ${msg}`, severity: 'error' })
+      setSnackbar({ open: true, message: `${editingEvent ? '更新' : '追加'}失敗: ${msg}`, severity: 'error' })
     }
   }
 
@@ -119,13 +162,7 @@ function App() {
     }
   }
 
-  const resetForm = () => {
-    setNewTime('08:00')
-    setNewSound('zarei')
-    setNewAnnouncement('')
-    setNewRecurring(true)
-    setNewDate('')
-  }
+  const isEditing = editingEvent !== null
 
   return (
     <Container maxWidth="sm" sx={{ py: 2, pb: 10 }}>
@@ -145,35 +182,33 @@ function App() {
             <ListItem
               key={event.id}
               component={Paper}
-              sx={{ mb: 1, opacity: event.enabled ? 1 : 0.5 }}
+              sx={{ mb: 1, opacity: event.enabled ? 1 : 0.5, cursor: 'pointer' }}
+              onClick={() => openEditDialog(event)}
             >
               <Switch
                 checked={event.enabled}
                 onChange={() => handleToggle(event)}
+                onClick={(e) => e.stopPropagation()}
                 size="small"
                 sx={{ mr: 1 }}
               />
               <ListItemText
                 primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                     <AccessTimeIcon fontSize="small" />
                     <Typography variant="body1" fontWeight="bold">{event.time}</Typography>
                     <Chip label={SOUND_LABELS[event.sound]} size="small" color="primary" variant="outlined" />
+                    {event.recurring ? (
+                      <Chip icon={<RepeatIcon />} label="毎日" size="small" color="info" variant="outlined" />
+                    ) : (
+                      <Chip icon={<EventIcon />} label={event.date || '単発'} size="small" color="warning" variant="outlined" />
+                    )}
                   </Box>
                 }
-                secondary={
-                  <>
-                    {event.announcement}
-                    {!event.recurring && event.date && (
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                        ({event.date})
-                      </Typography>
-                    )}
-                  </>
-                }
+                secondary={event.announcement}
               />
               <ListItemSecondaryAction>
-                <IconButton edge="end" onClick={() => handleDelete(event.id)} size="small">
+                <IconButton edge="end" onClick={(e) => { e.stopPropagation(); handleDelete(event.id) }} size="small">
                   <DeleteIcon />
                 </IconButton>
               </ListItemSecondaryAction>
@@ -185,27 +220,27 @@ function App() {
       <Fab
         color="primary"
         sx={{ position: 'fixed', bottom: 24, right: 24 }}
-        onClick={() => setDialogOpen(true)}
+        onClick={openAddDialog}
       >
         <AddIcon />
       </Fab>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>イベント追加</DialogTitle>
+      <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="xs">
+        <DialogTitle>{isEditing ? 'イベント編集' : 'イベント追加'}</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
           <TextField
             label="時刻"
             type="time"
-            value={newTime}
-            onChange={(e) => setNewTime(e.target.value)}
+            value={formTime}
+            onChange={(e) => setFormTime(e.target.value)}
             InputLabelProps={{ shrink: true }}
             fullWidth
           />
           <TextField
             label="音源"
             select
-            value={newSound}
-            onChange={(e) => setNewSound(e.target.value as SidePipeSound)}
+            value={formSound}
+            onChange={(e) => setFormSound(e.target.value as SidePipeSound)}
             fullWidth
           >
             {SOUNDS.map((s) => (
@@ -215,30 +250,30 @@ function App() {
           <TextField
             label="号令"
             placeholder="例: 出港用意 5分前"
-            value={newAnnouncement}
-            onChange={(e) => setNewAnnouncement(e.target.value)}
+            value={formAnnouncement}
+            onChange={(e) => setFormAnnouncement(e.target.value)}
             fullWidth
           />
           <FormControlLabel
             control={
-              <Checkbox checked={newRecurring} onChange={(e) => setNewRecurring(e.target.checked)} />
+              <Checkbox checked={formRecurring} onChange={(e) => setFormRecurring(e.target.checked)} />
             }
             label="毎日繰り返す"
           />
-          {!newRecurring && (
+          {!formRecurring && (
             <TextField
               label="日付"
               type="date"
-              value={newDate}
-              onChange={(e) => setNewDate(e.target.value)}
+              value={formDate}
+              onChange={(e) => setFormDate(e.target.value)}
               InputLabelProps={{ shrink: true }}
               fullWidth
             />
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setDialogOpen(false); resetForm() }}>キャンセル</Button>
-          <Button onClick={handleAdd} variant="contained">追加</Button>
+          <Button onClick={closeDialog}>キャンセル</Button>
+          <Button onClick={handleSave} variant="contained">{isEditing ? '保存' : '追加'}</Button>
         </DialogActions>
       </Dialog>
 

@@ -13,6 +13,7 @@ export class Scheduler {
     private tasks: ScheduledTask[] = [];
     private sunsetTimeout: ReturnType<typeof setTimeout> | null = null;
     private isHoliday: (date: Date) => boolean;
+    private isRebuilding = false;
 
     constructor(configStore: ConfigStore, alexa: AlexaManager, sun: Sun, logger: AppLogger) {
         this.configStore = configStore;
@@ -35,6 +36,16 @@ export class Scheduler {
     }
 
     public rebuild(): void {
+        if (this.isRebuilding) return;
+        this.isRebuilding = true;
+        try {
+            this._rebuild();
+        } finally {
+            this.isRebuilding = false;
+        }
+    }
+
+    private _rebuild(): void {
         this.stopAll();
         this.removeExpiredEvents();
 
@@ -59,7 +70,7 @@ export class Scheduler {
 
     private removeExpiredEvents(): void {
         const config = this.configStore.get();
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = this.getTodayStr();
         const remaining = config.events.filter(event => {
             if (!event.recurring && event.date && event.date < todayStr) {
                 console.log(`期限切れイベントを削除: ${event.announcement} (${event.date})`);
@@ -101,7 +112,7 @@ export class Scheduler {
 
     private isNextWakeUpToday(config: AppConfig): boolean {
         if (!config.nextWakeUp.enabled || !config.nextWakeUp.date) return false;
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = this.getTodayStr();
         return config.nextWakeUp.date === todayStr;
     }
 
@@ -127,6 +138,14 @@ export class Scheduler {
     }
 
     private static readonly LEAD_TIME_SEC = 8;
+
+    private getTodayStr(): string {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
 
     private parseTime(timeStr: string): { hours: number; minutes: number } {
         const [h, m] = timeStr.split(':').map(Number);
@@ -321,21 +340,37 @@ export class Scheduler {
     }
 
     private scheduleEvents(config: AppConfig): void {
-        config.events.filter(e => e.enabled).forEach(event => {
+        const enabledEvents = config.events.filter(e => e.enabled);
+        console.log(`イベントスケジュール: ${enabledEvents.length}件のイベント (全${config.events.length}件中)`);
+
+        enabledEvents.forEach(event => {
             const { hours, minutes } = this.parseTime(event.time);
 
             if (!event.recurring && event.date) {
-                const todayStr = new Date().toISOString().split('T')[0];
-                if (event.date < todayStr) return;
+                const todayStr = this.getTodayStr();
+                if (event.date < todayStr) {
+                    console.log(`  スキップ(期限切れ): ${event.announcement} (${event.date} < ${todayStr})`);
+                    return;
+                }
             }
 
-            const task = cron.schedule(`${this.toCronWithLeadTime(hours, minutes)} * * *`, async () => {
+            const cronExpr = `${this.toCronWithLeadTime(hours, minutes)} * * *`;
+            console.log(`  登録: ${event.announcement} | ${event.time} → cron="${cronExpr}" | sound=${event.sound} | recurring=${event.recurring}`);
+
+            const task = cron.schedule(cronExpr, async () => {
+                console.log(`イベントcron発火: ${event.announcement} (${event.time})`);
                 const currentConfig = this.configStore.get();
-                if (this.shouldSkipToday(currentConfig)) return;
+                if (this.shouldSkipToday(currentConfig)) {
+                    console.log(`  → shouldSkipTodayによりスキップ`);
+                    return;
+                }
 
                 if (!event.recurring && event.date) {
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    if (event.date !== todayStr) return;
+                    const todayStr = this.getTodayStr();
+                    if (event.date !== todayStr) {
+                        console.log(`  → 日付不一致によりスキップ: event.date=${event.date}, today=${todayStr}`);
+                        return;
+                    }
                 }
 
                 try {

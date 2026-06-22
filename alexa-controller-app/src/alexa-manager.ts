@@ -138,8 +138,7 @@ export class AlexaManager {
     public async speakWithSound(sound: string, announcement: string): Promise<void> {
         const audioPath = this.getSidePipeAudioPath(sound);
         if (!audioPath) {
-            console.error(`音源が設定されていません: ${sound}`);
-            return;
+            throw new Error(`音源が設定されていません: ${sound} (環境変数を確認してください)`);
         }
         console.log(`イベント時報: ${sound} - ${announcement}`);
         await this.speak(`

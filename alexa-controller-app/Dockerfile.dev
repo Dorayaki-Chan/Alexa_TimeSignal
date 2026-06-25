@@ -1,0 +1,18 @@
+FROM node:20-bullseye-slim
+
+ENV LANG=ja_JP.UTF-8
+ENV TZ=Asia/Tokyo
+
+RUN apt-get update && apt-get install -y curl jq oathtool
+
+WORKDIR /app
+
+COPY package.json package-lock.json tsconfig.json ./
+RUN npm install
+
+COPY alexa_remote_control.sh ./
+RUN chmod +x ./alexa_remote_control.sh
+
+COPY ./src ./src
+
+CMD ["npx", "tsx", "watch", "--poll", "./src/index.ts"]

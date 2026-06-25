@@ -1,0 +1,18 @@
+services:
+  alexa_control:
+    build:
+      context: ./alexa-controller-app
+      dockerfile: Dockerfile.dev
+    container_name: alexa_control_dev
+    restart: "no"
+    env_file:
+      - ./.env
+    environment:
+      SET_REFRESH_TOKEN: "${SET_REFRESH_TOKEN}"
+      NODE_ENV: development
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./alexa-controller-app/src:/app/src:ro
+      - ./data:/app/data
+    command: ["npx", "tsx", "watch", "--poll", "./src/index.ts"]

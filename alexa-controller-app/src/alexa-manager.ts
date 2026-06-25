@@ -89,6 +89,7 @@ export class AlexaManager {
         return new Promise((resolve, reject) => {
             execFile('/app/alexa_remote_control.sh',
                 ['-d', '全部の部屋', '-e', `speak:"${message}"`],
+                { env: { ...process.env, SPEAKVOL: String(AlexaManager.SPEAK_VOL), NORMALVOL: String(AlexaManager.NORMAL_VOL) } },
                 (error, stdout, stderr) => {
                     if (error) {
                         reject(new Error(`alexa_remote_control failed: ${error.message}\n${stderr}`));
@@ -100,18 +101,14 @@ export class AlexaManager {
         });
     }
 
-    private async speak(message: string, durationMs: number = 30000): Promise<string> {
-        await this.setVolumeAll(AlexaManager.SPEAK_VOL);
+    private async speak(message: string): Promise<string> {
+        await this.setVolumeAll(AlexaManager.NORMAL_VOL);
         await new Promise(r => setTimeout(r, AlexaManager.DEVICE_INTERVAL_MS));
 
-        let result: string;
         let lastError: Error | null = null;
         for (let attempt = 0; attempt <= AlexaManager.MAX_RETRIES; attempt++) {
             try {
-                result = await this.execSpeak(message);
-                await new Promise(r => setTimeout(r, durationMs));
-                await this.setVolumeAll(AlexaManager.NORMAL_VOL);
-                return result;
+                return await this.execSpeak(message);
             } catch (e: any) {
                 lastError = e;
                 if (attempt < AlexaManager.MAX_RETRIES) {
@@ -120,7 +117,6 @@ export class AlexaManager {
                 }
             }
         }
-        await this.setVolumeAll(AlexaManager.NORMAL_VOL);
         throw lastError!;
     }
 
@@ -167,7 +163,7 @@ export class AlexaManager {
                 <prosody volume='x-fast'>かかれ</prosody>
             </amazon:emotion>
             <audio src='${this.AUDIO_KAKARE_PATH}'/>
-        `, 90000);
+        `);
     }
 
     public async syukkou(): Promise<void> {
@@ -187,7 +183,7 @@ export class AlexaManager {
 
     public async shoto(): Promise<void> {
         console.log('start of shoto');
-        await this.speak(`<audio src='${this.AUDIO_SHOTO_PATH}'/>`, 90000);
+        await this.speak(`<audio src='${this.AUDIO_SHOTO_PATH}'/>`);
     }
 
     public async kisho(): Promise<void> {
